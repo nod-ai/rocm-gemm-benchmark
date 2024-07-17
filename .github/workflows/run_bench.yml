@@ -49,9 +49,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
           source $GITHUB_WORKSPACE/venv/bin/activate
-          for device in $(seq 6 7); do
-            sudo $GITHUB_WORKSPACE/build/gemm-bench --device=$device &
-          done
+          sudo $GITHUB_WORKSPACE/build/gemm-bench --device=0 &
           ./gb run --backends=rocblas --output=rocblas.hdf
           sudo pkill -f gemm-bench
 
@@ -59,8 +57,6 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
           source $GITHUB_WORKSPACE/venv/bin/activate
-          for device in $(seq 6 7); do
-            sudo $GITHUB_WORKSPACE/build/gemm-bench --device=$device &
-          done
+          sudo $GITHUB_WORKSPACE/build/gemm-bench --device=0 &
           ./gb run --backends=iree --output=iree.hdf
           sudo pkill -f gemm-bench
