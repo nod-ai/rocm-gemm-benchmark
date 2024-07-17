@@ -1,0 +1,66 @@
+name: Build and Test
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+          submodules_recursive: true
+
+      - name: Set up CMake
+        uses: jwlawson/actions-setup-cmake@v1
+
+      - name: Set up Ninja
+        uses: ashutoshvarma/setup-ninja@v1
+
+      - name: Build LLVM Project
+        run: |
+          cd $GITHUB_WORKSPACE/third_party/llvm-project
+          cmake -G Ninja -B $GITHUB_WORKSPACE/third_party/llvm-project/build/ -S llvm -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="mlir;clang"
+          cmake --build $GITHUB_WORKSPACE/third_party/llvm-project/build/
+
+      - name: Build IREE Kernels
+        run: |
+          cd $GITHUB_WORKSPACE/src/ireekernels
+          cmake -G Ninja -B $GITHUB_WORKSPACE/ireekernelsbuild
+          cmake --build $GITHUB_WORKSPACE/ireekernelsbuild
+
+      - name: Build Main Project
+        run: |
+          cd $GITHUB_WORKSPACE
+          CXX=hipcc meson setup build --reconfigure
+          cd $GITHUB_WORKSPACE/build
+          sudo ninja
+          cd $GITHUB_WORKSPACE
+
+      - name: Set up Python environment
+        run: |
+          python3 -m venv $GITHUB_WORKSPACE/venv
+          source $GITHUB_WORKSPACE/venv/bin/activate
+          pip install -r $GITHUB_WORKSPACE/gemmbench/requirements.txt
+
+      - name: Run RocBLAS Benchmarks
+        run: |
+          cd $GITHUB_WORKSPACE
+          source $GITHUB_WORKSPACE/venv/bin/activate
+          for device in $(seq 6 7); do
+            sudo $GITHUB_WORKSPACE/build/gemm-bench --device=$device &
+          done
+          ./gb run --backends=rocblas --output=rocblas.hdf
+          sudo pkill -f gemm-bench
+
+      - name: Run IREE Benchmarks
+        run: |
+          cd $GITHUB_WORKSPACE
+          source $GITHUB_WORKSPACE/venv/bin/activate
+          for device in $(seq 6 7); do
+            sudo $GITHUB_WORKSPACE/build/gemm-bench --device=$device &
+          done
+          ./gb run --backends=iree --output=iree.hdf
+          sudo pkill -f gemm-bench
