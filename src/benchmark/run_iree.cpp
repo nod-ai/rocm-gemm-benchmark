@@ -43,7 +43,7 @@ void IREEGEMMBench::initialize()
     char** compileArgs = new char*[2];
     compileArgs[0]     = (char*)"--iree-hal-target-backends=rocm";
     compileArgs[1]     = (char*)"--iree-rocm-target-chip=gfx942";
-    compile_state      = ireeGemmCompilerInitialize(2, compileArgs);
+    compile_state      = nullptr; // ireeGemmCompilerInitialize(2, compileArgs);
     device_id          = 7;
 }
 
