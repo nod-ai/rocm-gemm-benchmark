@@ -50,6 +50,7 @@ jobs:
           python3 -m venv $GITHUB_WORKSPACE/venv
           source $GITHUB_WORKSPACE/venv/bin/activate
           pip install -r $GITHUB_WORKSPACE/gemmbench/requirements.txt
+          deactivate
 
       - name: Run RocBLAS Benchmarks
         run: |
@@ -58,6 +59,7 @@ jobs:
           sudo $GITHUB_WORKSPACE/build/gemm-bench --device=0 &
           ./gb run --backends=rocblas --output=rocblas.hdf
           sudo pkill -f gemm-bench
+          deactivate
 
       - name: Run IREE Benchmarks
         run: |
@@ -66,3 +68,4 @@ jobs:
           sudo $GITHUB_WORKSPACE/build/gemm-bench --device=0 &
           ./gb run --backends=iree --output=iree.hdf
           sudo pkill -f gemm-bench
+          deactivate
