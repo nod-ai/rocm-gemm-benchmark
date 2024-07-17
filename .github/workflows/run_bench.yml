@@ -10,7 +10,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          submodules: 'recursive'
+          submodules: 'true'
+      
+      - name: Update IREE
+        run: |
+          cd $GITHUB_WORKSPACE/third_party/iree
+          git submodule update --init
 
       - name: Set up CMake
         uses: jwlawson/actions-setup-cmake@v1
