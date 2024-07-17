@@ -40,7 +40,7 @@ jobs:
       - name: Build Main Project
         run: |
           cd $GITHUB_WORKSPACE
-          CXX=hipcc meson setup build --reconfigure
+          CXX=hipcc meson setup build
           cd $GITHUB_WORKSPACE/build
           sudo ninja
           cd $GITHUB_WORKSPACE
