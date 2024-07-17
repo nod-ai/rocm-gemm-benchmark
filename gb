@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+
+import pathlib
+import sys
+
+top = pathlib.Path(__file__).resolve().parent
+sys.path.append(str(top / "build"))
+
+import gemmbench.cli
+
+gemmbench.cli.main(top)
