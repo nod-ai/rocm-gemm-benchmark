@@ -34,8 +34,8 @@ jobs:
       - name: Build IREE Kernels
         run: |
           cd $GITHUB_WORKSPACE/src/ireekernels
-          cmake -G Ninja -B $GITHUB_WORKSPACE/ireekernelsbuild
-          cmake --build $GITHUB_WORKSPACE/ireekernelsbuild
+          cmake -G Ninja -B $GITHUB_WORKSPACE/src/ireekernelsbuild
+          cmake --build $GITHUB_WORKSPACE/src/ireekernelsbuild
 
       - name: Build Main Project
         run: |
