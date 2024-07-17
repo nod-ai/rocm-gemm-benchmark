@@ -69,3 +69,15 @@ jobs:
           ./gb run --backends=iree --output=iree.hdf
           sudo pkill -f gemm-bench
           deactivate
+      
+      - name: Upload IREE benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: iree-benchmark-results
+          path: iree.hdf
+
+      - name: Upload RocBLAS benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: rocblas-benchmark-results
+          path: rocblas.hdf
