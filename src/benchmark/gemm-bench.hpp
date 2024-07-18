@@ -81,13 +81,13 @@ namespace GEMMBench
     class GEMMPipeline
     {
     public:
-        void initialize() {};
-        void destroy() {};
-        void linkData(GEMMData* data)
+        virtual void initialize() {};
+        virtual void destroy() {};
+        virtual void linkData(GEMMData* data)
         {
             this->data = data;
         };
-        void           setDevice(int device_id) {};
+        virtual void           setDevice(int device_id) {};
         virtual Result run(Problem problem) = 0;
 
     protected:
@@ -104,9 +104,9 @@ namespace GEMMBench
 
     public:
         IREEGEMMBench(){};
-        void   initialize();
-        void   setDevice(int device_id);
-        void   destroy();
+        void   initialize() override;
+        void   setDevice(int device_id) override;
+        void   destroy() override;
         Result run(Problem problem) override;
     };
 
@@ -114,7 +114,7 @@ namespace GEMMBench
     {
     public:
         RocBLASGEMMBench(){};
-        void   setDevice(int device_id);
+        void   setDevice(int device_id) override;
         Result run(Problem problem) override;
     };
 

@@ -1,10 +1,9 @@
 name: Build and Test
 
-on: 
-  push:
+on:
   pull_request:
   schedule:
-    - cron: '0 7 * * *'
+    - cron: '0 8 * * *'
 
 jobs:
   build:
@@ -58,9 +57,10 @@ jobs:
 
       - name: Run RocBLAS Benchmarks
         run: |
+          sudo pkill -f gemm-bench
           cd $GITHUB_WORKSPACE
           source $GITHUB_WORKSPACE/venv/bin/activate
-          sudo $GITHUB_WORKSPACE/build/gemm-bench --device=0 &
+          for device in $(seq 3 7); do (sudo $GITHUB_WORKSPACE/build/gemm-bench --device=$device &); done
           ./gb run --backends=rocblas --output=rocblas.hdf
           sudo pkill -f gemm-bench
           deactivate
@@ -69,7 +69,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
           source $GITHUB_WORKSPACE/venv/bin/activate
-          sudo $GITHUB_WORKSPACE/build/gemm-bench --device=0 &
+          for device in $(seq 3 7); do (sudo $GITHUB_WORKSPACE/build/gemm-bench --device=$device &); done
           ./gb run --backends=iree --output=iree.hdf
           sudo pkill -f gemm-bench
           deactivate

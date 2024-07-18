@@ -39,7 +39,6 @@ std::string
 
 void IREEGEMMBench::initialize()
 {
-    std::cout << "Initializing bench" << std::endl;
     char** compileArgs = new char*[2];
     compileArgs[0]     = (char*)"--iree-hal-target-backends=rocm";
     compileArgs[1]     = (char*)"--iree-rocm-target-chip=gfx942";
