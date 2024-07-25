@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include <hipblaslt/hipblaslt.h>
+
 class GEMMData;
 
 typedef struct compiler_state_t iree_compiler_state_t;
@@ -116,6 +118,37 @@ namespace GEMMBench
         RocBLASGEMMBench(){};
         void   setDevice(int device_id) override;
         Result run(Problem problem) override;
+    };
+
+    class HipBLASLtGEMMBench : public GEMMPipeline
+    {
+    public:
+        HipBLASLtGEMMBench();
+        ~HipBLASLtGEMMBench();
+
+        void   initialize() override;
+        void   destroy() override;
+        void   setDevice(int device_id) override;
+        Result run(Problem problem) override;
+
+    private:
+        hipblasLtHandle_t handle;
+        hipblasStatus_t   hipblaslt_status;
+
+        void executeGEMM(hipblasOperation_t transA,
+                         hipblasOperation_t transB,
+                         int64_t            m,
+                         int64_t            n,
+                         int64_t            k,
+                         const float&       alpha,
+                         const float&       beta,
+                         void*              d_A,
+                         void*              d_B,
+                         void*              d_C,
+                         void*              d_D,
+                         void*              workspace,
+                         size_t             workspace_size,
+                         hipStream_t        stream);
     };
 
     int testDPM(int device);

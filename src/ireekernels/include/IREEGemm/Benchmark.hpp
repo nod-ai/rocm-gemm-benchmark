@@ -1,8 +1,9 @@
+#include <memory>
 #include <string>
 
 #include "IREEGemm/Codegen.hpp"
 #include "IREEGemm/Compile.h"
-#include "IREEGemm/Runtime.h"
+#include "IREEGemm/Runtime.hpp"
 #include "IREEGemm/Utils.h"
 
 class IREEGemmBenchmarkPipeline {
@@ -15,7 +16,10 @@ class IREEGemmBenchmarkPipeline {
 
  private:
   compiler_state_t* compile_state;
-  runtime_state_t* runtime_state;
+  std::unique_ptr<IREEGemmRuntimeState> runtime_state;
+  std::unique_ptr<IREEGemmDeviceStorage> storage_fp16;
+  std::unique_ptr<IREEGemmDeviceStorage> storage_bf16;
+
   int currOp, totalOps;
 
   std::string generateGemmString(const Problem& p);

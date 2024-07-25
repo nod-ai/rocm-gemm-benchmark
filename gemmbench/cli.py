@@ -1,3 +1,4 @@
+import os
 import argparse
 import csv
 import datetime
@@ -73,7 +74,7 @@ def run(top=None, suite=None, output=None, no_shuffle=False, repeat=10, backends
             h5.flush()
 
 def roofline(results=None, **kwargs):
-    """Generate a roofline plot of GEMM performance from multiple result files."""
+    """Generate a roofline plot of GEMM performance from multiple result files and save raw data as CSV."""
     if results is None:
         raise ValueError("No result files provided")
 
@@ -88,7 +89,7 @@ def roofline(results=None, **kwargs):
             for serial in h5.keys():
                 experiment_group = h5[serial]
                 data.append(dict(serial=int(serial), **experiment_group.attrs))
-        
+
         for item in data:
             M, N, K = item['M'], item['N'], item['K']
             flops = 2 * M * N * K
@@ -96,10 +97,21 @@ def roofline(results=None, **kwargs):
             item['arithmetic_intensity'] = flops / bytes
             item['tflops'] = (flops / 1e12) / (item['mean_microseconds'] / 1e6)
         
+        data = [item for item in data if item['dtype'] == 'fp16']
         x = [item['arithmetic_intensity'] for item in data]
         y = [item['tflops'] for item in data]
         
         plt.scatter(x, y, alpha=0.6, color=next(colors), label=result_file.strip())
+
+        # Save raw data as CSV
+        csv_filename = f"{os.path.splitext(result_file.strip())[0]}_raw_data.csv"
+        with open(csv_filename, 'w', newline='') as csvfile:
+            fieldnames = ['serial', 'A', 'B', 'M', 'N', 'K', 'dtype', 'mean_microseconds', 'arithmetic_intensity', 'tflops']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for item in data:
+                writer.writerow({field: item[field] for field in fieldnames})
+        print(f"Raw data saved as '{csv_filename}'")
     
     plt.xscale('log')
     plt.yscale('log')
@@ -108,7 +120,7 @@ def roofline(results=None, **kwargs):
     plt.title('Roofline Plot of GEMM Performance')
     
     peak_memory_bandwidth = 5.3
-    peak_compute = 980.6
+    peak_compute = 1300
     
     x_range = np.logspace(np.log10(min(x)), np.log10(max(x)), 100)
     y_memory = peak_memory_bandwidth * x_range
@@ -128,6 +140,7 @@ def roofline(results=None, **kwargs):
     plt.close()
     
     print("Roofline plot saved as 'roofline_plot.png'")
+
 
 def summary(results=None, **kwargs):
     """Print a summary of the results in an HDF file."""

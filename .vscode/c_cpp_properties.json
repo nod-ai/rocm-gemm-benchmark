@@ -1,0 +1,29 @@
+{
+  "configurations": [
+    {
+      "name": "Linux",
+      "includePath": [
+        "${workspaceFolder}/third_party/llvm-project/llvm/include",
+        "${workspaceFolder}/third_party/llvm-project/mlir/include",
+        "${workspaceFolder}/third_party/llvm-project/build/include",
+        "${workspaceFolder}/third_party/llvm-project/build/tools/mlir/include",
+        "${workspaceFolder}/src/ireekernels/include",
+        "${workspaceFolder}/third_party/iree/compiler/bindings/c",
+        "${workspaceFolder}/third_party/iree/runtime/src",
+        "${workspaceFolder}/src/benchmark",
+        "/opt/rocm/include",
+        "/usr/include",
+        "/usr/include/clang/15/include",
+        "/usr/include/c++/12",
+        "/usr/include/x86_64-linux-gnu/c++/12/",
+        "/usr/include/python3.10"
+      ],
+      "defines": [],
+      "cStandard": "c17",
+      "cppStandard": "c++14",
+      "intelliSenseMode": "linux-clang-x64",
+      "compileCommands": "${workspaceFolder}/src/ireekernelsbuild/compile_commands.json"
+    }
+  ],
+  "version": 4
+}
