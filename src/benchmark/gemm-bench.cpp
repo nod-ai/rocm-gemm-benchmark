@@ -15,9 +15,8 @@ namespace GEMMBench
     const uint RESULTS_PORT = 7179;
 
     std::unordered_map<std::string, GEMMPipeline*> benches{
-        {"rocblas", new RocBLASGEMMBench()},
-        {"iree", new IREEGEMMBench()},
-        {"hipblaslt", new HipBLASLtGEMMBench()},
+        {"rocblas", new RocBLASGEMMBench()}, {"iree", new IREEGEMMBench()},
+        // {"hipblaslt", new HipBLASLtGEMMBench()},
     };
 
     /**

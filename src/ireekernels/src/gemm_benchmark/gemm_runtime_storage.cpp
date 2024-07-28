@@ -17,8 +17,7 @@ iree_device_size_t IREEGemmDeviceStorage::capacity() { return _capacity; }
 
 int IREEGemmDeviceStorage::allocate(iree_hal_device_t* device,
                                     iree_device_size_t capacity,
-                                    float* input_buff = nullptr) {
-  std::cout << "Releasing buffer? " << _buffer << std::endl;
+                                    const float* input_buff) {
   if (_buffer) iree_hal_buffer_release(_buffer);
 
   iree_hal_allocator_t* device_allocator = iree_hal_device_allocator(device);
@@ -35,8 +34,6 @@ int IREEGemmDeviceStorage::allocate(iree_hal_device_t* device,
   if (input_buff)
     std::copy(input_buff, input_buff + capacity, host_buff.begin());
 
-  std::cout << "> Allocating " << device_capacity << " bytes in device memory"
-            << std::endl;
   iree_status_t status = iree_ok_status();
   status = iree_hal_allocator_allocate_buffer(
       device_allocator, device_buffer_params, device_capacity, &_buffer);
@@ -45,8 +42,6 @@ int IREEGemmDeviceStorage::allocate(iree_hal_device_t* device,
     return 1;
   }
 
-  std::cout << "> Transferring " << std::min(host_capacity, device_capacity)
-            << " bytes from host to device" << std::endl;
   status = iree_hal_device_transfer_h2d(
       device, host_buff.data(), _buffer, 0,
       std::min(host_capacity, device_capacity),
@@ -55,8 +50,6 @@ int IREEGemmDeviceStorage::allocate(iree_hal_device_t* device,
     std::cerr << "Failed to write to bucket" << std::endl;
     return 1;
   }
-
-  iree_hal_allocator_release(device_allocator);
 
   _capacity = capacity;
   return 0;

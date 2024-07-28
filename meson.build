@@ -36,11 +36,11 @@ iree_deps = [
 
 gemm_bench_src += 'src/benchmark/DataInitialization.cpp'
 gemm_bench_src += 'src/benchmark/run-rocblas.cpp'
-gemm_bench_src += 'src/benchmark/run-hipblaslt.cpp'
+# gemm_bench_src += 'src/benchmark/run-hipblaslt.cpp'
 gemm_bench_src += 'src/benchmark/run_iree.cpp'
 gemm_bench_deps += [rocblas_dep, rocsmi_dep, hipblas_dep, hipblaslt_dep]
 gemm_bench_deps += iree_deps
-gemm_bench_incs = [iree_include_folder]
+gemm_bench_incs = [iree_include_folder, 'third_party/iree/runtime/src']
 
 fpic = ['-fPIC']
 

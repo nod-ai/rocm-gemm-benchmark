@@ -40,7 +40,7 @@ class IREEGemmDeviceStorage {
 
   iree_device_size_t capacity();
   int allocate(iree_hal_device_t* device, iree_device_size_t capacity,
-               float* input_buff);
+               const float* input_buff);
   int subspan(iree_hal_dim_t offset, iree_hal_dim_t size,
               iree_hal_buffer_t** subspan_out);
 
@@ -70,6 +70,7 @@ class IREEGemmRunner {
   void linkInput(std::vector<iree_hal_dim_t> shape, std::string dtype,
                  float* buffer = nullptr);
   int setupProblem(const std::string& module_path);
+  void preExecution(int num_iterations);
   void execute(int num_iterations);
   void cleanup();
 
@@ -90,6 +91,7 @@ class IREEGemmRunner {
   IREEGemmRuntimeState* state;
 
   std::vector<RuntimeInput> inputs;
+  std::vector<iree_vm_async_invoke_state_t> runtime_states;
 
   int dispatchIOBuffers();
   int createInputs(iree_vm_list_t** inputs_out);

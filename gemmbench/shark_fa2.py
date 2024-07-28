@@ -13,7 +13,7 @@ func.func @main(%295 : !torch.vtensor<{key_shape},{datatype}>, %298 : !torch.vte
     %float0.000000e00 = torch.constant.float 0.000000e+00
     %none_372 = torch.constant.none
     %none_373 = torch.constant.none
-    %282:2 = torch.operator "torch.aten._scaled_dot_product_flash_attention_for_cpu"(%295, %298, %301, %float0.000000e00, %false_371, %none_372, %none_373) : (!torch.vtensor<{key_shape},{datatype}>, !torch.vtensor<{query_shape},{datatype}>, !torch.vtensor<{value_shape},{datatype}>, !torch.float, !torch.bool, !torch.none, !torch.none) -> (!torch.vtensor<{output_shape},{datatype}>, !torch.vtensor<{[B,H,S_Q], 'f32'}>)
+    %282:2 = torch.operator "torch.aten._scaled_dot_product_flash_attention_for_cpu"(%295, %298, %301, %float0.000000e00, %false_371, %none_372, %none_373) : (!torch.vtensor<{query_shape},{datatype}>, !torch.vtensor<{key_shape},{datatype}>, !torch.vtensor<{value_shape},{datatype}>, !torch.float, !torch.bool, !torch.none, !torch.none) -> (!torch.vtensor<{output_shape},{datatype}>, !torch.vtensor<[{B},{H},{S_Q}], f32>)
     return %282#0 : !torch.vtensor<{output_shape},{datatype}>
 }} 
 """
@@ -27,9 +27,10 @@ func.func @main(%295 : !torch.vtensor<{key_shape},{datatype}>, %298 : !torch.vte
 
 # List of known attention shapes in popular LLM architectures
 known_shapes = [
-    (1, 12, 512, 512, 64, "f16"),   # Example shape for BERT base
-    (1, 16, 1024, 1024, 64, "f16"), # Example shape for GPT-3 small
-    (1, 12, 384, 384, 64, "f16"),   # Example shape for some other model
+    (1, 42, 384, 64320, 64, "f16")
+    # (1, 12, 512, 512, 64, "f16"),   # Example shape for BERT base
+    # (1, 16, 1024, 1024, 64, "f16"), # Example shape for GPT-3 small
+    # (1, 12, 384, 384, 64, "f16"),   # Example shape for some other model
 ]
 
 # Function to add more shapes iteratively
@@ -43,7 +44,7 @@ def add_more_shapes(shape_list):
 # Main script
 if __name__ == "__main__":
     # Add more shapes to the known list
-    known_shapes = add_more_shapes(known_shapes)
+    # known_shapes = add_more_shapes(known_shapes)
     
     # Generate MLIR files for each shape in the list
     for shape in known_shapes:

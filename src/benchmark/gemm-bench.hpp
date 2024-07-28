@@ -2,15 +2,17 @@
 #pragma once
 
 #include <cstring>
+#include <memory>
 #include <string>
 #include <vector>
 
-#include <hipblaslt/hipblaslt.h>
+// #include <hip/hip_runtime.h>
 
 class GEMMData;
 
 typedef struct compiler_state_t iree_compiler_state_t;
-typedef struct runtime_state_t  iree_runtime_state_t;
+class IREEGemmDeviceStorage;
+class IREEGemmRuntimeState;
 
 namespace GEMMBench
 {
@@ -89,7 +91,7 @@ namespace GEMMBench
         {
             this->data = data;
         };
-        virtual void           setDevice(int device_id) {};
+        virtual void   setDevice(int device_id) {};
         virtual Result run(Problem problem) = 0;
 
     protected:
@@ -100,13 +102,17 @@ namespace GEMMBench
     {
 
     private:
-        iree_runtime_state_t*  runtime_state;
+        IREEGemmRuntimeState*  runtime_state;
+        IREEGemmDeviceStorage* storage_fp16;
+        IREEGemmDeviceStorage* storage_bf16;
+
         iree_compiler_state_t* compile_state;
         int                    device_id = 0;
 
     public:
-        IREEGEMMBench(){};
+        IREEGEMMBench() {};
         void   initialize() override;
+        void   linkData(GEMMData* data) override;
         void   setDevice(int device_id) override;
         void   destroy() override;
         Result run(Problem problem) override;
@@ -115,41 +121,41 @@ namespace GEMMBench
     class RocBLASGEMMBench : public GEMMPipeline
     {
     public:
-        RocBLASGEMMBench(){};
+        RocBLASGEMMBench() {};
         void   setDevice(int device_id) override;
         Result run(Problem problem) override;
     };
 
-    class HipBLASLtGEMMBench : public GEMMPipeline
-    {
-    public:
-        HipBLASLtGEMMBench();
-        ~HipBLASLtGEMMBench();
+    // class HipBLASLtGEMMBench : public GEMMPipeline
+    // {
+    // public:
+    //     HipBLASLtGEMMBench();
+    //     ~HipBLASLtGEMMBench();
 
-        void   initialize() override;
-        void   destroy() override;
-        void   setDevice(int device_id) override;
-        Result run(Problem problem) override;
+    //     void   initialize() override;
+    //     void   destroy() override;
+    //     void   setDevice(int device_id) override;
+    //     Result run(Problem problem) override;
 
-    private:
-        hipblasLtHandle_t handle;
-        hipblasStatus_t   hipblaslt_status;
+    // private:
+    //     hipblasLtHandle_t handle;
+    //     hipblasStatus_t   hipblaslt_status;
 
-        void executeGEMM(hipblasOperation_t transA,
-                         hipblasOperation_t transB,
-                         int64_t            m,
-                         int64_t            n,
-                         int64_t            k,
-                         const float&       alpha,
-                         const float&       beta,
-                         void*              d_A,
-                         void*              d_B,
-                         void*              d_C,
-                         void*              d_D,
-                         void*              workspace,
-                         size_t             workspace_size,
-                         hipStream_t        stream);
-    };
+    //     void executeGEMM(hipblasOperation_t transA,
+    //                      hipblasOperation_t transB,
+    //                      int64_t            m,
+    //                      int64_t            n,
+    //                      int64_t            k,
+    //                      const float&       alpha,
+    //                      const float&       beta,
+    //                      void*              d_A,
+    //                      void*              d_B,
+    //                      void*              d_C,
+    //                      void*              d_D,
+    //                      void*              workspace,
+    //                      size_t             workspace_size,
+    //                      hipStream_t        stream);
+    // };
 
     int testDPM(int device);
     int run(int device);

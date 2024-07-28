@@ -41,22 +41,15 @@ IREEGemmBenchmarkPipeline::IREEGemmBenchmarkPipeline() {
   compileArgs[1] = (char*)"--iree-rocm-target-chip=gfx942";
   compile_state = ireeGemmCompilerInitialize(2, compileArgs);
 
-  std::cout << "Creating runtime state" << std::endl;
   runtime_state = std::make_unique<IREEGemmRuntimeState>("rocm://7");
-  std::cout << "Creating fp16 storage" << std::endl;
   storage_fp16 = std::make_unique<IREEGemmDeviceStorage>("fp16");
-  std::cout << "Creating bf16 storage" << std::endl;
-  storage_fp16 = std::make_unique<IREEGemmDeviceStorage>("bf16");
+  storage_bf16 = std::make_unique<IREEGemmDeviceStorage>("bf16");
 
   std::vector<float> input_buff(1e9);
   std::fill(input_buff.begin(), input_buff.end(), 0);
 
-  std::cout << "Allocating fp16" << std::endl;
   storage_fp16->allocate(runtime_state->device, 1e9, input_buff.data());
-  std::cout << "Allocated fp16" << std::endl;
-  std::cout << "Allocating bf16" << std::endl;
   storage_bf16->allocate(runtime_state->device, 1e9, input_buff.data());
-  std::cout << "Allocated bf16" << std::endl;
 }
 
 IREEGemmBenchmarkPipeline::~IREEGemmBenchmarkPipeline() {
@@ -70,11 +63,9 @@ double IREEGemmBenchmarkPipeline::benchmarkProblem(const Problem& p) {
   std::string mlirPath = "kernels/mlir/" + gemmName + ".mlir";
   std::string vmfbPath = "kernels/vmfb/" + gemmName + ".vmfb";
 
-  std::cout << "Creating runner" << std::endl;
   IREEGemmRunner runner(
       runtime_state.get(),
       p.dtype == "fp16" ? storage_fp16.get() : storage_bf16.get(), false);
-  std::cout << "Built runner" << std::endl;
 
   if (!fileExists(mlirPath)) {
     if (showProgress)
@@ -114,6 +105,7 @@ double IREEGemmBenchmarkPipeline::benchmarkProblem(const Problem& p) {
 
   if (showProgress)
     print_progress(currOp, totalOps, ("Executing " + gemmName).c_str());
+  runner.preExecution(numIterations);
   runner.execute(numIterations);
 
   // delete[] A;
@@ -135,7 +127,7 @@ int main(void) {
         for (bool transposeA : {true, false}) {
           for (bool transposeB : {true, false}) {
             if (!(transposeA && transposeB)) {
-              for (const std::string& dtype : {"fp16", "fp32", "bf16"}) {
+              for (const std::string& dtype : {"fp16", "bf16"}) {
                 problems.push_back(
                     Problem{m, k, n, transposeA, transposeB, dtype});
               }

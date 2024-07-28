@@ -95,22 +95,24 @@ int IREEGemmRunner::setupProblem(const std::string& module_path) {
   return 0;
 }
 
-void IREEGemmRunner::execute(int num_iterations) {
+void IREEGemmRunner::preExecution(int num_iterations) {
   num_iterations = std::min(num_iterations, MAX_ITERATIONS);
-
-  iree_loop_inline_storage_t loop_storage = {{0xCD}, iree_ok_status()};
-  iree_loop_t loop = iree_loop_inline_initialize(&loop_storage);
 
   loop_data->num_iterations = num_iterations;
   loop_data->completed_iterations = 0;
   loop_data->start_time = std::chrono::steady_clock::now();
 
-  std::vector<iree_vm_async_invoke_state_t> states(num_iterations);
+  runtime_states.resize(num_iterations);
+}
+
+void IREEGemmRunner::execute(int num_iterations) {
+  iree_loop_inline_storage_t loop_storage = {{0xCD}, iree_ok_status()};
+  iree_loop_t loop = iree_loop_inline_initialize(&loop_storage);
 
   for (int i = 0; i < num_iterations; ++i) {
     iree_vm_list_t* input = rotate_buffer ? vm_rotating_inputs[i] : vm_inputs;
 
-    iree_vm_async_invoke(loop, &states[i], vm_context, vm_function,
+    iree_vm_async_invoke(loop, &runtime_states[i], vm_context, vm_function,
                          IREE_VM_INVOCATION_FLAG_NONE, nullptr, input,
                          vm_outputs, iree_allocator_system(), runtimeCallback,
                          loop_data.get());
@@ -130,10 +132,6 @@ void IREEGemmRunner::cleanup() {
 }
 
 int IREEGemmRunner::dispatchIOBuffers() {
-  iree_hal_element_type_t parsed_dtype = inputs[0].dtype;
-  if (parsed_dtype == IREE_HAL_ELEMENT_TYPE_NONE)
-    return IREE_STATUS_INVALID_ARGUMENT;
-
   iree_status_t status = iree_ok_status();
 
   // Create inputs and outputs
@@ -188,7 +186,7 @@ int IREEGemmRunner::createInputs(iree_vm_list_t** inputs_out) {
     // Initialize buffer views
     iree_hal_buffer_view_t* input_buffer_view = nullptr;
     status = iree_hal_buffer_view_create(
-        subspan, 2, input.shape.data(), input.dtype,
+        subspan, input.shape.size(), input.shape.data(), input.dtype,
         IREE_HAL_ENCODING_TYPE_DENSE_ROW_MAJOR, iree_allocator_system(),
         &input_buffer_view);
     if (!iree_status_is_ok(status)) {
