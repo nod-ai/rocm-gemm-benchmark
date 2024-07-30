@@ -1,5 +1,7 @@
 build
 rocm_gemm_venv
-*.venv
+*venv
 __pycache__
 *.hdf
+attention/mlir
+attention/vmfb

@@ -5,23 +5,15 @@ from multiprocessing import Pool, cpu_count
 import itertools
 
 def generate_attention_shapes():
-    batch_sizes = [1, 2, 4]
-    head_counts = [12, 16, 24, 32, 40, 48, 64]
-    seq_lengths = [64, 128, 256, 384, 512, 768, 1024, 2048, 4096, 8192]
-    head_dims = [16, 32, 64, 128, 256]
+    batch_sizes = [1, 2, 4, 8, 16]
+    head_counts = [12, 24, 36, 42, 48]
+    head_dims = [32, 64, 128]
+    seq_lengths = [64, 128, 256, 384, 512, 1024, 2048, 4096, 8192, 16384, 32768, 64320]
     datatypes = ["f16"]
 
     shapes = []
-    for B, H, S, DH, datatype in itertools.product(batch_sizes, head_counts, seq_lengths, head_dims, datatypes):
-        S_Q = S
-        S_KV = S
-
+    for B, H, S_Q, S_KV, DH, datatype in itertools.product(batch_sizes, head_counts, seq_lengths, seq_lengths, head_dims, datatypes):
         shapes.append((B, H, S_Q, S_KV, DH, datatype))
-        
-        if S_KV > 64:
-            shapes.append((B, H, S_KV // 2, S_KV, DH, datatype))
-        if S_Q > 64:
-            shapes.append((B, H, S_Q, S_Q // 2, DH, datatype))
 
     return shapes
 
@@ -81,7 +73,7 @@ def compile_shape(shape):
                 "--iree-codegen-llvmgpu-use-vector-distribution",
                 "--iree-codegen-gpu-native-math-precision=true",
                 "--iree-flow-enable-aggressive-fusion",
-                f"--dump-compilation-phases-to=compile_phases_{B}_{H}_{S_Q}_{S_KV}_{DH}_{datatype}",
+                # f"--dump-compilation-phases-to=compile_phases_{B}_{H}_{S_Q}_{S_KV}_{DH}_{datatype}",
             ]
         )
         
@@ -95,6 +87,15 @@ def compile_shape(shape):
 
 if __name__ == "__main__":
     shapes = generate_attention_shapes()
+    # shapes = [
+    #     (1, 42, 384, 64320, 64, "f16"),
+    #     (1, 42, 4096, 4096, 64, "f16"),
+    #     (1, 42, 384, 4096, 64, "f16"),
+    #     (1, 42, 8192, 8192, 64, "f16"),
+    #     (1, 42, 384, 8192, 64, "f16"),
+    #     (1, 42, 16384, 16384, 64, "f16"),
+    #     (1, 42, 384, 16384, 64, "f16"),
+    # ]
     print(f"Generated {len(shapes)} attention shapes.")
     
     num_cpus = max(1, cpu_count() - 20)

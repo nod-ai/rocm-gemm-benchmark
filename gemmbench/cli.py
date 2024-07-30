@@ -28,6 +28,7 @@ def run(top=None, suite=None, output=None, no_shuffle=False, repeat=10, backends
 
     if repeat is None:
         repeat = 10
+    repeat = int(repeat)
 
     if no_shuffle is None:
         no_shuffle = False
@@ -82,6 +83,7 @@ def roofline(results=None, **kwargs):
     colors = cycle(['b', 'g', 'r', 'c', 'm', 'y', 'k'])
     
     plt.figure(figsize=(12, 8))
+
     
     for idx, result_file in enumerate(files):
         data = []
@@ -90,13 +92,15 @@ def roofline(results=None, **kwargs):
                 experiment_group = h5[serial]
                 data.append(dict(serial=int(serial), **experiment_group.attrs))
 
+        # data = [item for item in data if item["ok"]]
+
         for item in data:
             flops = 0
             bytes = 1
 
             if 'sharkfa' in result_file:
                 S_Q, S_KV, DH = item['M'], item['N'], item['K']
-                B, H = ord(item['A'][0]), ord(item['B'][0])
+                item['A'], item['B'] = B, H = ord(item['A'][0]), ord(item['B'][0])
                 flops = 4 * S_Q * S_KV * DH * B * H
                 bytes = B * H * 2 * (2 * S_KV * DH + 2 * S_Q * DH + S_Q * S_KV)
             else:
@@ -104,10 +108,14 @@ def roofline(results=None, **kwargs):
                 flops = 2 * M * N * K
                 bytes = M * K + N * K + M * N
             
-            item['arithmetic_intensity'] = flops / bytes
-            item['tflops'] = (flops / 1e12) / (item['mean_microseconds'] / 1e6)
+            if item['ok']:
+                item['arithmetic_intensity'] = flops / bytes
+                item['tflops'] = (flops / 1e12) / (item['mean_microseconds'] / 1e6)
+            else:
+                item['arithmetic_intensity'] = 0
+                item['tflops'] = 0
         
-        data = [item for item in data if item['dtype'] == 'fp16']
+        # data = [item for item in data if item['dtype'] == 'fp16']
         x = [item['arithmetic_intensity'] for item in data]
         y = [item['tflops'] for item in data]
         
