@@ -58,14 +58,14 @@ void IREEGEMMBench::linkData(GEMMData* data)
 void IREEGEMMBench::setDevice(int device_id)
 {
     this->device_id = device_id;
-    runtime_state   = new IREEGemmRuntimeState("hip://" + std::to_string(device_id));
+    runtime_state   = new IREEGemmRuntimeState("rocm://" + std::to_string(device_id));
     std::cout << "Running on " << device_id << std::endl;
 }
 
 Result IREEGEMMBench::run(Problem problem)
 {
     IREEGemmRunner runner(
-        runtime_state, problem.dtype == "fp16" ? storage_fp16 : storage_bf16, false);
+        runtime_state, problem.dtype == "fp16" ? storage_fp16 : storage_bf16, true);
 
     int         M          = problem.M;
     int         K          = problem.K;

@@ -16,6 +16,7 @@ namespace GEMMBench
 
     std::unordered_map<std::string, GEMMPipeline*> benches{
         {"rocblas", new RocBLASGEMMBench()}, {"iree", new IREEGEMMBench()},
+        // {"sharkfa", new SHARKFABench()},
         // {"hipblaslt", new HipBLASLtGEMMBench()},
     };
 
@@ -86,7 +87,7 @@ namespace GEMMBench
     int run(int device)
     {
         std::cout << "Initializing tensors with trig..." << std::endl;
-        GEMMNullInitializer initializer;
+        GEMMTrigInitializer initializer;
         GEMMData            data("fp32", 1e9, &initializer);
 
         std::cout << "Running on " << benches.size() << " benches" << std::endl;

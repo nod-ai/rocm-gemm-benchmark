@@ -21,7 +21,7 @@ int handleError(iree_compiler_error_t* error, compiler_state_t* s) {
 
 compiler_state_t* ireeGemmCompilerInitialize(int argc, char** argv) {
   if (!ireeCompilerLoadLibrary(
-          "/home/sujasper/nod-rocm-gemm-benchmark/src/ireekernelsbuild/build/"
+          "/home/sujasper/rocm-gemm-benchmark/src/ireekernelsbuild/build/"
           "iree/lib/libIREECompiler.so")) {
     fprintf(stderr, "** Failed to initialize IREE Compiler **\n");
     exit(1);

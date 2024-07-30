@@ -100,7 +100,6 @@ namespace GEMMBench
 
     class IREEGEMMBench : public GEMMPipeline
     {
-
     private:
         IREEGemmRuntimeState*  runtime_state;
         IREEGemmDeviceStorage* storage_fp16;
@@ -111,6 +110,22 @@ namespace GEMMBench
 
     public:
         IREEGEMMBench() {};
+        void   initialize() override;
+        void   linkData(GEMMData* data) override;
+        void   setDevice(int device_id) override;
+        void   destroy() override;
+        Result run(Problem problem) override;
+    };
+
+    class SHARKFABench : public GEMMPipeline
+    {
+    private:
+        IREEGemmRuntimeState*  runtime_state;
+        IREEGemmDeviceStorage* storage_fp16;
+        int                    device_id = 0;
+
+    public:
+        SHARKFABench() {};
         void   initialize() override;
         void   linkData(GEMMData* data) override;
         void   setDevice(int device_id) override;

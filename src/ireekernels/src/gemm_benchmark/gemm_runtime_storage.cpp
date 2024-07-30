@@ -38,7 +38,8 @@ int IREEGemmDeviceStorage::allocate(iree_hal_device_t* device,
   status = iree_hal_allocator_allocate_buffer(
       device_allocator, device_buffer_params, device_capacity, &_buffer);
   if (!iree_status_is_ok(status)) {
-    std::cerr << "Failed to allocate bucket" << std::endl;
+    std::cerr << "Failed to allocate bucket: "
+              << iree_status_code_string(iree_status_code(status)) << std::endl;
     return 1;
   }
 
