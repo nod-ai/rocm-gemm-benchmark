@@ -1,6 +1,7 @@
 """GEMM AI Performace problem suites."""
 
 from gbm import Problem as GEMM, Configuration, Solution
+import itertools
 
 def is_compute_bound(M, N, K, bpe):
     """Is this GEMM compute (or memory) bound?"""
@@ -814,6 +815,24 @@ def unet():
             for tB in ["N", "T"]:
                 for m, n, k in UNET:
                     yield GEMM("unet", m, n, k, tA, tB, dtype)
+
+def flash_attention():
+    batch_sizes = [1, 2, 4]
+    head_counts = [12, 16, 24, 32]
+    seq_lengths = [64, 128, 256, 384, 512, 1024, 2048, 4096, 8192]
+    head_dims = [16, 32, 64, 128]
+    datatypes = ["fp16"]
+    
+    for B, H, S, DH, datatype in itertools.product(batch_sizes, head_counts, seq_lengths, head_dims, datatypes):
+        S_Q = S
+        S_KV = S
+
+        yield GEMM("flash_attention", S_Q, S_KV, DH, str(chr(B)), str(chr(H)), datatype)
+        
+        if S_KV > 64:
+            yield GEMM("flash_attention", S_KV // 2, S_KV, DH, str(chr(B)), str(chr(H)), datatype)
+        
+
 
 def all():
     yield from llama13bmatvec()

@@ -91,9 +91,19 @@ def roofline(results=None, **kwargs):
                 data.append(dict(serial=int(serial), **experiment_group.attrs))
 
         for item in data:
-            M, N, K = item['M'], item['N'], item['K']
-            flops = 2 * M * N * K
-            bytes = M * K + N * K + M * N
+            flops = 0
+            bytes = 1
+
+            if 'sharkfa' in result_file:
+                S_Q, S_KV, DH = item['M'], item['N'], item['K']
+                B, H = ord(item['A'][0]), ord(item['B'][0])
+                flops = 4 * S_Q * S_KV * DH * B * H
+                bytes = B * H * 2 * (2 * S_KV * DH + 2 * S_Q * DH + S_Q * S_KV)
+            else:
+                M, N, K = item['M'], item['N'], item['K']
+                flops = 2 * M * N * K
+                bytes = M * K + N * K + M * N
+            
             item['arithmetic_intensity'] = flops / bytes
             item['tflops'] = (flops / 1e12) / (item['mean_microseconds'] / 1e6)
         
