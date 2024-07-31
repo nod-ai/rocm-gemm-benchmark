@@ -65,6 +65,7 @@ def compile_shape(shape):
             extra_args=[
                 f"--iree-rocm-target-chip={compile_options.rocm_target_chip}",
                 "--iree-global-opt-propagate-transposes=true",
+                "--iree-codegen-transform-dialect-library=attention_and_matmul_spec.mlir",
                 "--iree-opt-outer-dim-concat=true",
                 "--iree-opt-const-eval=false",
                 "--iree-opt-data-tiling=false",
@@ -104,8 +105,11 @@ if __name__ == "__main__":
     with Pool(num_cpus) as pool:
         results = list(tqdm(pool.imap(compile_shape, shapes), total=len(shapes)))
     
+    error_count = 0
     for result in results:
         if 'error' in result.lower():
-            print(result)
+            # print(result)
+            error_count += 1
+    print(f'{len(shapes) - error_count} Success, {error_count} Failed out of {len(shapes)} shapes')
 
     print("Compilation process completed.")

@@ -87,26 +87,33 @@ def roofline(results=None, **kwargs):
     
     for idx, result_file in enumerate(files):
         data = []
-        with h5py.File(result_file.strip(), "r") as h5:
-            for serial in h5.keys():
-                experiment_group = h5[serial]
-                data.append(dict(serial=int(serial), **experiment_group.attrs))
+        if result_file.split('.')[-1] == 'hdf':
+            with h5py.File(result_file.strip(), "r") as h5:
+                for serial in h5.keys():
+                    experiment_group = h5[serial]
+                    data.append(dict(serial=int(serial), **experiment_group.attrs))
+        elif result_file.split('.')[-1] == 'csv':
+            df = pandas.read_csv(result_file)
+            data = df.to_dict(orient='records')
 
         # data = [item for item in data if item["ok"]]
+
+        print(data[0])
 
         for item in data:
             flops = 0
             bytes = 1
 
-            if 'sharkfa' in result_file:
-                S_Q, S_KV, DH = item['M'], item['N'], item['K']
+            B, H, S_Q, S_KV, DH = item['A'], item['B'], item['M'], item['N'], item['K']
+
+            if result_file.split('.')[-1] == 'hdf':
                 item['A'], item['B'] = B, H = ord(item['A'][0]), ord(item['B'][0])
-                flops = 4 * S_Q * S_KV * DH * B * H
-                bytes = B * H * 2 * (2 * S_KV * DH + 2 * S_Q * DH + S_Q * S_KV)
-            else:
-                M, N, K = item['M'], item['N'], item['K']
-                flops = 2 * M * N * K
-                bytes = M * K + N * K + M * N
+            flops = 4 * S_Q * S_KV * DH * B * H
+            bytes = B * H * 2 * (2 * S_KV * DH + 2 * S_Q * DH + S_Q * S_KV)
+        
+            # M, N, K = item['M'], item['N'], item['K']
+            # flops = 2 * M * N * K
+            # bytes = M * K + N * K + M * N
             
             if item['ok']:
                 item['arithmetic_intensity'] = flops / bytes
@@ -128,7 +135,8 @@ def roofline(results=None, **kwargs):
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             for item in data:
-                writer.writerow({field: item[field] for field in fieldnames})
+                if item['ok']:
+                    writer.writerow({field: item[field] for field in fieldnames})
         print(f"Raw data saved as '{csv_filename}'")
     
     plt.xscale('log')

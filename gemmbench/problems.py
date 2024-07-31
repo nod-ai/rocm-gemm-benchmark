@@ -823,12 +823,7 @@ def flash_attention():
     seq_lengths = [64, 128, 256, 384, 512, 1024, 2048, 4096, 8192, 16384, 32768, 64320]
     datatypes = ["f16"]
 
-    shapes = []
-    for B, H, S_Q, S_KV, DH, datatype in itertools.product(batch_sizes, head_counts, seq_lengths, seq_lengths, head_dims, datatypes):
-        bytes = B * H * 2 * (2 * S_KV * DH + 2 * S_Q * DH + S_Q * S_KV)
-        if bytes < 1e9:
-            shapes.append((B, H, S_Q, S_KV, DH, datatype))
-
+    # shapes = []
     shapes = [
         (1, 42, 384, 64320, 64, "f16"),
         (1, 42, 4096, 4096, 64, "f16"),
@@ -838,6 +833,11 @@ def flash_attention():
         (1, 42, 16384, 16384, 64, "f16"),
         (1, 42, 384, 16384, 64, "f16"),
     ]
+    for B, H, S_Q, S_KV, DH, datatype in itertools.product(batch_sizes, head_counts, seq_lengths, seq_lengths, head_dims, datatypes):
+        bytes = B * H * 2 * (2 * S_KV * DH + 2 * S_Q * DH + S_Q * S_KV)
+        if bytes < 1e9:
+            shapes.append((B, H, S_Q, S_KV, DH, datatype))
+
     
     for B, H, S_Q, S_KV, DH, datatype in shapes:
         yield GEMM("flash_attention", S_Q, S_KV, DH, chr(B), chr(H), datatype)
