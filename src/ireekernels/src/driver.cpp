@@ -40,6 +40,16 @@ IREEGemmBenchmarkPipeline::IREEGemmBenchmarkPipeline() {
   compileArgs[0] = (char*)"--iree-hal-target-backends=rocm";
   compileArgs[1] = (char*)"--iree-rocm-target-chip=gfx942";
   compile_state = ireeGemmCompilerInitialize(2, compileArgs);
+
+  runtime_state = std::make_unique<IREEGemmRuntimeState>("rocm://7");
+  storage_fp16 = std::make_unique<IREEGemmDeviceStorage>("fp16");
+  storage_bf16 = std::make_unique<IREEGemmDeviceStorage>("bf16");
+
+  std::vector<float> input_buff(1e9);
+  std::fill(input_buff.begin(), input_buff.end(), 0);
+
+  storage_fp16->allocate(runtime_state->device, 1e9, input_buff.data());
+  storage_bf16->allocate(runtime_state->device, 1e9, input_buff.data());
 }
 
 IREEGemmBenchmarkPipeline::~IREEGemmBenchmarkPipeline() {
@@ -53,8 +63,9 @@ double IREEGemmBenchmarkPipeline::benchmarkProblem(const Problem& p) {
   std::string mlirPath = "kernels/mlir/" + gemmName + ".mlir";
   std::string vmfbPath = "kernels/vmfb/" + gemmName + ".vmfb";
 
-  runtime_state = NULL;
-  ireeGemmRuntimeInitialize("rocm://4", /*rotate_buffer*/ true, &runtime_state);
+  IREEGemmRunner runner(
+      runtime_state.get(),
+      p.dtype == "fp16" ? storage_fp16.get() : storage_bf16.get(), false);
 
   if (!fileExists(mlirPath)) {
     if (showProgress)
@@ -83,12 +94,19 @@ double IREEGemmBenchmarkPipeline::benchmarkProblem(const Problem& p) {
   if (showProgress)
     print_progress(currOp, totalOps, ("Setting up " + gemmName).c_str());
   double executionTime = 0.0;
-  ireeGemmRuntimeSetupProblem(runtime_state, vmfbPath.c_str(), p.M, p.K, p.N,
-                              p.transposeA, p.transposeB, p.dtype.c_str(),
-                              nullptr, nullptr, 1e9);
-  ireeGemmRuntimeExecute(runtime_state, numIterations);
 
-  ireeGemmRuntimeCleanup(runtime_state);
+  runner.linkInput(
+      {(size_t)(p.transposeA ? p.K : p.M), (size_t)(p.transposeA ? p.M : p.K)},
+      p.dtype, nullptr);
+  runner.linkInput(
+      {(size_t)(p.transposeB ? p.N : p.K), (size_t)(p.transposeB ? p.K : p.N)},
+      p.dtype, nullptr);
+  runner.setupProblem(vmfbPath);
+
+  if (showProgress)
+    print_progress(currOp, totalOps, ("Executing " + gemmName).c_str());
+  runner.preExecution(numIterations);
+  runner.execute(numIterations);
 
   // delete[] A;
   // delete[] B;
@@ -109,7 +127,7 @@ int main(void) {
         for (bool transposeA : {true, false}) {
           for (bool transposeB : {true, false}) {
             if (!(transposeA && transposeB)) {
-              for (const std::string& dtype : {"fp16", "fp32", "bf16"}) {
+              for (const std::string& dtype : {"fp16", "bf16"}) {
                 problems.push_back(
                     Problem{m, k, n, transposeA, transposeB, dtype});
               }
@@ -120,7 +138,7 @@ int main(void) {
     }
   }
 
-  std::cout << "Successfully generated " << problems.size() << " GEMM problems"
+  std::cout << "Successfully generated " << problems.size() << " GEMM problems "
             << std::endl
             << "Running Benchmarks" << std::endl;
 

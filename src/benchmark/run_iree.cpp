@@ -13,7 +13,7 @@
 
 #include "IREEGemm/Codegen.hpp"
 #include "IREEGemm/Compile.h"
-#include "IREEGemm/Runtime.h"
+#include "IREEGemm/Runtime.hpp"
 
 using namespace GEMMBench;
 
@@ -44,19 +44,28 @@ void IREEGEMMBench::initialize()
     compileArgs[1]     = (char*)"--iree-rocm-target-chip=gfx942";
     compile_state      = nullptr; // ireeGemmCompilerInitialize(2, compileArgs);
     device_id          = 7;
+
+    storage_fp16 = new IREEGemmDeviceStorage("fp16");
+    storage_bf16 = new IREEGemmDeviceStorage("bf16");
+}
+
+void IREEGEMMBench::linkData(GEMMData* data)
+{
+    storage_fp16->allocate(runtime_state->device, data->getCapacity(), data->getBufferA());
+    storage_bf16->allocate(runtime_state->device, data->getCapacity(), data->getBufferB());
 }
 
 void IREEGEMMBench::setDevice(int device_id)
 {
     this->device_id = device_id;
+    runtime_state   = new IREEGemmRuntimeState("rocm://" + std::to_string(device_id));
     std::cout << "Running on " << device_id << std::endl;
 }
 
 Result IREEGEMMBench::run(Problem problem)
 {
-    runtime_state          = NULL;
-    std::string device_uri = "rocm://" + std::to_string(device_id);
-    ireeGemmRuntimeInitialize(device_uri.c_str(), true, &runtime_state);
+    IREEGemmRunner runner(
+        runtime_state, problem.dtype == "fp16" ? storage_fp16 : storage_bf16, true);
 
     int         M          = problem.M;
     int         K          = problem.K;
@@ -86,30 +95,22 @@ Result IREEGEMMBench::run(Problem problem)
         ireeGemmCompilerCleanup(compile_state);
     }
 
-    ireeGemmRuntimeSetupProblem(runtime_state,
-                                vmfbPath.c_str(),
-                                M,
-                                K,
-                                N,
-                                transposeA,
-                                transposeB,
-                                dtype.c_str(),
-                                data->getBufferA(),
-                                data->getBufferB(),
-                                data->getCapacity());
+    runner.linkInput({(size_t)(transposeA ? K : M), (size_t)(transposeA ? M : K)}, dtype, nullptr);
+    runner.linkInput({(size_t)(transposeB ? N : K), (size_t)(transposeB ? K : N)}, dtype, nullptr);
+    runner.setupProblem(vmfbPath);
 
     auto timer = Timer();
     auto fm    = Frequency::getFrequencyMonitor();
 
-    ireeGemmRuntimeExecute(runtime_state, num_cold_iterations);
+    runner.preExecution(num_cold_iterations);
+    runner.execute(num_cold_iterations);
 
+    runner.preExecution(num_warm_iterations);
     fm->start();
     timer.tic();
-    ireeGemmRuntimeExecute(runtime_state, num_warm_iterations);
+    runner.execute(num_warm_iterations);
     timer.toc();
     fm->stop();
-
-    ireeGemmRuntimeCleanup(runtime_state);
 
     auto [sclk, mclk, fclk] = fm->statistics();
 
@@ -137,4 +138,7 @@ void IREEGEMMBench::destroy()
 {
     std::cout << "Destroying bench" << std::endl;
     ireeGemmCompilerShutdown(compile_state);
+    delete runtime_state;
+    delete storage_fp16;
+    delete storage_bf16;
 }

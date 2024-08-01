@@ -23,6 +23,8 @@ gemm_bench_deps = [zmq_dep, hiprand_dep]
 
 rocblas_dep = cpp.find_library('librocblas', dirs: ['/opt/rocm/lib'])
 rocsmi_dep = cpp.find_library('rocm_smi64', dirs: ['/opt/rocm/lib'])
+hipblas_dep = cpp.find_library('libhipblas', dirs: ['/opt/rocm/lib'])
+hipblaslt_dep = cpp.find_library('libhipblaslt', dirs: ['/opt/rocm/lib'])
 
 iree_lib_folder = meson.current_source_dir() + '/src/ireekernelsbuild/lib'
 iree_include_folder = 'src/ireekernels/include'
@@ -34,10 +36,12 @@ iree_deps = [
 
 gemm_bench_src += 'src/benchmark/DataInitialization.cpp'
 gemm_bench_src += 'src/benchmark/run-rocblas.cpp'
+# gemm_bench_src += 'src/benchmark/run-hipblaslt.cpp'
+gemm_bench_src += 'src/benchmark/run_flashattention.cpp'
 gemm_bench_src += 'src/benchmark/run_iree.cpp'
-gemm_bench_deps += [rocblas_dep, rocsmi_dep]
+gemm_bench_deps += [rocblas_dep, rocsmi_dep, hipblas_dep, hipblaslt_dep]
 gemm_bench_deps += iree_deps
-gemm_bench_incs = [iree_include_folder]
+gemm_bench_incs = [iree_include_folder, 'third_party/iree/runtime/src']
 
 fpic = ['-fPIC']
 

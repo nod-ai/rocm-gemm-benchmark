@@ -3,7 +3,7 @@ name: Build and Test
 on:
   pull_request:
   schedule:
-    - cron: '0 8 * * *'
+    - cron: "0 8 * * *"
 
 jobs:
   build:
@@ -13,8 +13,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          submodules: 'true'
-      
+          submodules: "true"
+
       - name: Update IREE
         run: |
           cd $GITHUB_WORKSPACE/third_party/iree
@@ -26,7 +26,7 @@ jobs:
       - name: Set up Ninja
         uses: ashutoshvarma/setup-ninja@v1
         env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: "true"
 
       - name: Build LLVM Project
         run: |
@@ -61,7 +61,7 @@ jobs:
           cd $GITHUB_WORKSPACE
           source $GITHUB_WORKSPACE/venv/bin/activate
           for device in $(seq 3 7); do (sudo $GITHUB_WORKSPACE/build/gemm-bench --device=$device &); done
-          ./gb run --backends=rocblas --output=rocblas.hdf
+          ./gb run --backends=rocblas --repeat=1 --output=rocblas.hdf
           sudo pkill -f gemm-bench
           deactivate
 
@@ -70,10 +70,10 @@ jobs:
           cd $GITHUB_WORKSPACE
           source $GITHUB_WORKSPACE/venv/bin/activate
           for device in $(seq 3 7); do (sudo $GITHUB_WORKSPACE/build/gemm-bench --device=$device &); done
-          ./gb run --backends=iree --output=iree.hdf
+          ./gb run --backends=iree --repeat=1 --output=iree.hdf
           sudo pkill -f gemm-bench
           deactivate
-      
+
       - name: Upload IREE benchmark results
         uses: actions/upload-artifact@v4
         with:

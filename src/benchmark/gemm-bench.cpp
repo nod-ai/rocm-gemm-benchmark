@@ -17,6 +17,8 @@ namespace GEMMBench
     std::unordered_map<std::string, GEMMPipeline*> benches{
         {"rocblas", new RocBLASGEMMBench()},
         {"iree", new IREEGEMMBench()},
+        {"sharkfa", new SHARKFABench()},
+        // {"hipblaslt", new HipBLASLtGEMMBench()},
     };
 
     /**
