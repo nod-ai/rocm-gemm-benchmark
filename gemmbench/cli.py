@@ -104,16 +104,16 @@ def roofline(results=None, **kwargs):
             flops = 0
             bytes = 1
 
-            B, H, S_Q, S_KV, DH = item['A'], item['B'], item['M'], item['N'], item['K']
-
-            if result_file.split('.')[-1] == 'hdf':
-                item['A'], item['B'] = B, H = ord(item['A'][0]), ord(item['B'][0])
-            flops = 4 * S_Q * S_KV * DH * B * H
-            bytes = B * H * 2 * (2 * S_KV * DH + 2 * S_Q * DH + S_Q * S_KV)
-        
-            # M, N, K = item['M'], item['N'], item['K']
-            # flops = 2 * M * N * K
-            # bytes = M * K + N * K + M * N
+            if 'sharkfa' in result_file:
+                B, H, S_Q, S_KV, DH = item['A'], item['B'], item['M'], item['N'], item['K']
+                if result_file.split('.')[-1] == 'hdf':
+                    item['A'], item['B'] = B, H = ord(item['A'][0]), ord(item['B'][0])
+                flops = 4 * S_Q * S_KV * DH * B * H
+                bytes = B * H * 2 * (2 * S_KV * DH + 2 * S_Q * DH + S_Q * S_KV)
+            else:
+                M, N, K = item['M'], item['N'], item['K']
+                flops = 2 * M * N * K
+                bytes = M * K + N * K + M * N
             
             if item['ok']:
                 item['arithmetic_intensity'] = flops / bytes
