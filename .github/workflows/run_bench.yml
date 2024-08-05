@@ -47,6 +47,7 @@ jobs:
           cd $GITHUB_WORKSPACE/build
           sudo ninja
           cd $GITHUB_WORKSPACE
+          mkdir -p results
 
       - name: Set up Python environment
         run: |
@@ -61,7 +62,17 @@ jobs:
           cd $GITHUB_WORKSPACE
           source $GITHUB_WORKSPACE/venv/bin/activate
           for device in $(seq 3 7); do (sudo $GITHUB_WORKSPACE/build/gemm-bench --device=$device &); done
-          ./gb run --backends=rocblas --repeat=1 --output=rocblas.hdf
+          ./gb run --backends=rocblas --repeat=1 --output=results/rocblas.hdf
+          sudo pkill -f gemm-bench
+          deactivate
+
+      - name: Run HipBLASLt Benchmarks
+        run: |
+          sudo pkill -f gemm-bench
+          cd $GITHUB_WORKSPACE
+          source $GITHUB_WORKSPACE/venv/bin/activate
+          for device in $(seq 3 7); do (sudo $GITHUB_WORKSPACE/build/gemm-bench --device=$device &); done
+          ./gb run --backends=hipblaslt --repeat=1 --output=results/hipblaslt.hdf
           sudo pkill -f gemm-bench
           deactivate
 
@@ -70,18 +81,12 @@ jobs:
           cd $GITHUB_WORKSPACE
           source $GITHUB_WORKSPACE/venv/bin/activate
           for device in $(seq 3 7); do (sudo $GITHUB_WORKSPACE/build/gemm-bench --device=$device &); done
-          ./gb run --backends=iree --repeat=1 --output=iree.hdf
+          ./gb run --backends=iree --repeat=1 --output=results/iree.hdf
           sudo pkill -f gemm-bench
           deactivate
 
-      - name: Upload IREE benchmark results
+      - name: Upload benchmark results
         uses: actions/upload-artifact@v4
         with:
-          name: iree-benchmark-results
-          path: iree.hdf
-
-      - name: Upload RocBLAS benchmark results
-        uses: actions/upload-artifact@v4
-        with:
-          name: rocblas-benchmark-results
-          path: rocblas.hdf
+          name: benchmark-results
+          path: ./results/

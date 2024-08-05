@@ -104,7 +104,7 @@ def roofline(results=None, **kwargs):
             flops = 0
             bytes = 1
 
-            if 'sharkfa' in result_file:
+            if 'sharkfa' in result_file or 'torch' in result_file:
                 B, H, S_Q, S_KV, DH = item['A'], item['B'], item['M'], item['N'], item['K']
                 if result_file.split('.')[-1] == 'hdf':
                     item['A'], item['B'] = B, H = ord(item['A'][0]), ord(item['B'][0])

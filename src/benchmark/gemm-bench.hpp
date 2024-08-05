@@ -6,7 +6,11 @@
 #include <string>
 #include <vector>
 
-// #include <hip/hip_runtime.h>
+#include <hip/hip_runtime.h>
+#include <hipblaslt/hipblaslt.h>
+
+#include "FrequencyMonitor.hpp"
+#include "Timer.hpp"
 
 class GEMMData;
 
@@ -141,36 +145,43 @@ namespace GEMMBench
         Result run(Problem problem) override;
     };
 
-    // class HipBLASLtGEMMBench : public GEMMPipeline
-    // {
-    // public:
-    //     HipBLASLtGEMMBench();
-    //     ~HipBLASLtGEMMBench();
+    class HipBLASLtGEMMBench : public GEMMPipeline
+    {
+    public:
+        HipBLASLtGEMMBench();
+        ~HipBLASLtGEMMBench();
 
-    //     void   initialize() override;
-    //     void   destroy() override;
-    //     void   setDevice(int device_id) override;
-    //     Result run(Problem problem) override;
+        void   initialize() override;
+        void   destroy() override;
+        void   setDevice(int device_id) override;
+        Result run(Problem problem) override;
 
-    // private:
-    //     hipblasLtHandle_t handle;
-    //     hipblasStatus_t   hipblaslt_status;
+    private:
+        void*             workspace;
+        hipStream_t       stream;
+        hipblasLtHandle_t handle;
+        hipblasStatus_t   hipblaslt_status;
 
-    //     void executeGEMM(hipblasOperation_t transA,
-    //                      hipblasOperation_t transB,
-    //                      int64_t            m,
-    //                      int64_t            n,
-    //                      int64_t            k,
-    //                      const float&       alpha,
-    //                      const float&       beta,
-    //                      void*              d_A,
-    //                      void*              d_B,
-    //                      void*              d_C,
-    //                      void*              d_D,
-    //                      void*              workspace,
-    //                      size_t             workspace_size,
-    //                      hipStream_t        stream);
-    // };
+        void executeGemm(int                 num_iterations,
+                         Timer*              timer,
+                         Frequency::Monitor* monitor,
+                         hipblasLtHandle_t   handle,
+                         hipblasOperation_t  trans_a,
+                         hipblasOperation_t  trans_b,
+                         int64_t             m,
+                         int64_t             n,
+                         int64_t             k,
+                         int64_t             batch_count,
+                         float&              alpha,
+                         float&              beta,
+                         void*               d_a,
+                         void*               d_b,
+                         void*               d_c,
+                         void*               d_d,
+                         void*               d_workspace,
+                         int64_t             max_workspace_size,
+                         hipStream_t         stream);
+    };
 
     int testDPM(int device);
     int run(int device);

@@ -2,8 +2,7 @@ import ctypes
 from ctypes import c_int, c_char, c_double, c_float, POINTER
 import numpy as np
 
-# Load the shared library
-lib = ctypes.CDLL('./libgemm_bench.so')  # Adjust the path as needed
+lib = ctypes.CDLL('./libgemm_bench.so')
 
 class Problem(ctypes.Structure):
     _fields_ = [
@@ -43,7 +42,6 @@ class Result(ctypes.Structure):
         ("device", c_int)
     ]
 
-# Define function prototypes
 lib.initialize_gemm_pipeline.argtypes = []
 lib.initialize_gemm_pipeline.restype = None
 
