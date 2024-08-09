@@ -1,17 +1,21 @@
 import csv
 
-def read_shapes_from_csv(filename: str) -> list[tuple[int, int, int, int, int, str]]:
+def read_shapes_from_csv(filename: str) -> list[tuple]:
     shapes = []
     with open(filename, 'r') as f:
         reader = csv.DictReader(f)
         for row in reader:
             shapes.append((
+                int(row['index']),
+                row['tag'],
+                row['name'],
                 int(row['BATCH']),
                 int(row['NH']),
                 int(row['SEQ_Q']),
                 int(row['SEQ_KV']),
                 int(row['D_HEAD']),
-                str(row['dtype'])
+                str(row['dtype']),
+                row['ok'],
             ))
     return shapes
 
@@ -22,6 +26,8 @@ def write_results_to_csv(results : list[tuple] | list[list] | list[dict], output
     
     fieldnames = [
         'index', 
+        'tag',
+        'name',
         'BATCH', 
         'NH', 
         'SEQ_Q', 
@@ -30,7 +36,8 @@ def write_results_to_csv(results : list[tuple] | list[list] | list[dict], output
         'dtype', 
         'mean_microseconds', 
         'arithmetic_intensity', 
-        'tflops'
+        'tflops',
+        'ok'
     ]
 
     with open(output_filename, 'w', newline='') as f:

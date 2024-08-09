@@ -51,23 +51,25 @@ def run_benchmark(shape: tuple[int, int, int, int, int, str]) -> tuple[float, fl
     return mean_microseconds, arithmetic_intensity, tflops_per_second
 
 def main():
-    input_csv = "results/sharkfa.csv"
-    output_csv = "torch_llama_sdxl_attention.csv"
+    input_csv = "results/shark_llama_sdxl_attention.csv"
+    output_csv = "results/torch_llama_sdxl_attention.csv"
     
-    shapes = read_shapes_from_csv(input_csv)
+    configs = read_shapes_from_csv(input_csv)
     results = []
     
-    for index, shape in enumerate(tqdm(shapes)):
-        B, H, S_Q, S_KV, DH, dtype = shape
+    for config in tqdm(configs):
+        index, tag, name, B, H, S_Q, S_KV, DH, dtype, ok = config
+        shape = (B, H, S_Q, S_KV, DH, dtype)
         if dtype not in arg_to_torch_dtype:
             continue
         mean_microseconds, arithmetic_intensity, tflops = run_benchmark(shape)
         
         results.append((
-            index, B, H, S_Q, S_KV, DH, dtype,
+            index, tag, name, B, H, S_Q, S_KV, DH, dtype,
             round(mean_microseconds, 4),
             round(arithmetic_intensity, 4),
-            round(tflops, 4)
+            round(tflops, 4),
+            ok
         ))
     
     write_results_to_csv(results, output_csv)

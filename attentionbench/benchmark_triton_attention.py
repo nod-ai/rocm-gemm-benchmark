@@ -1230,7 +1230,7 @@ def varlen_benchmark_configs():
             ]
     return configs
 
-def run_benchmark(configs: list[tuple[int, int, int, int, int, str]]):
+def run_benchmark(configs: list[tuple]):
     def bench_flash_attention(
         BATCH, NH, N_CTX_Q, N_CTX_K, D_HEAD, dtype
     ):
@@ -1272,18 +1272,22 @@ def run_benchmark(configs: list[tuple[int, int, int, int, int, str]]):
         }
 
     results = []
-    for i, (BATCH, NH, N_CTX_Q, N_CTX_K, D_HEAD, dtype) in enumerate(tqdm(configs)):
+    for config in tqdm(configs):
+        index, tag, name, BATCH, NH, N_CTX_Q, N_CTX_K, D_HEAD, dtype, ok = config
         if dtype not in arg_to_torch_dtype:
             continue
         result = bench_flash_attention(BATCH, NH, N_CTX_Q, N_CTX_K, D_HEAD, dtype)
         result.update({
-            "index": i,
+            "index": index,
+            "tag": tag,
+            "name": name,
             "BATCH": BATCH,
             "NH": NH,
             "SEQ_Q": N_CTX_Q,
             "SEQ_KV": N_CTX_K,
             "D_HEAD": D_HEAD,
             "dtype": dtype,
+            "ok": ok,
         })
         results.append(result)
     
@@ -1296,7 +1300,7 @@ arg_to_torch_dtype = {
 }
 
 def main():
-    input_csv = "results/sharkfa.csv"
+    input_csv = "results/shark_llama_sdxl_attention.csv"
     output_csv = "results/triton_llama_sdxl_attention.csv"
     
     shapes = read_shapes_from_csv(input_csv)
