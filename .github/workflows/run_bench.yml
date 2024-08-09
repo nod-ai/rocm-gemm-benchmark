@@ -62,7 +62,7 @@ jobs:
           cd $GITHUB_WORKSPACE
           source $GITHUB_WORKSPACE/venv/bin/activate
           for device in $(seq 3 7); do (sudo $GITHUB_WORKSPACE/build/gemm-bench --device=$device &); done
-          ./gb run --backends=rocblas --repeat=1 --output=results/rocblas.hdf
+          ./gb run --backends=rocblas --repeat=1 --output=results/rocblas.csv
           sudo pkill -f gemm-bench
           deactivate
 
@@ -72,16 +72,27 @@ jobs:
           cd $GITHUB_WORKSPACE
           source $GITHUB_WORKSPACE/venv/bin/activate
           for device in $(seq 3 7); do (sudo $GITHUB_WORKSPACE/build/gemm-bench --device=$device &); done
-          ./gb run --backends=hipblaslt --repeat=1 --output=results/hipblaslt.hdf
+          ./gb run --backends=hipblaslt --repeat=1 --output=results/hipblaslt.csv
           sudo pkill -f gemm-bench
           deactivate
 
       - name: Run IREE Benchmarks
         run: |
+          sudo pkill -f gemm-bench
           cd $GITHUB_WORKSPACE
           source $GITHUB_WORKSPACE/venv/bin/activate
           for device in $(seq 3 7); do (sudo $GITHUB_WORKSPACE/build/gemm-bench --device=$device &); done
-          ./gb run --backends=iree --repeat=1 --output=results/iree.hdf
+          ./gb run --backends=iree --repeat=1 --output=results/iree.csv
+          sudo pkill -f gemm-bench
+          deactivate
+
+      - name: Run SHARK Attention Benchmarks
+        run: |
+          sudo pkill -f gemm-bench
+          cd $GITHUB_WORKSPACE
+          source $GITHUB_WORKSPACE/venv/bin/activate
+          for device in $(seq 3 7); do (sudo $GITHUB_WORKSPACE/build/gemm-bench --device=$device &); done
+          ./gb run --backends=sharkfa --suite=flash_attention --repeat=1 --output=results/sharkfa_llama_sdxl_attention.csv
           sudo pkill -f gemm-bench
           deactivate
 

@@ -59,7 +59,6 @@ void IREEGEMMBench::setDevice(int device_id)
 {
     this->device_id = device_id;
     runtime_state   = new IREEGemmRuntimeState("rocm://" + std::to_string(device_id));
-    std::cout << "Running on " << device_id << std::endl;
 }
 
 Result IREEGEMMBench::run(Problem problem)

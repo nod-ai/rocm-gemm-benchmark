@@ -56,7 +56,6 @@ void HipBLASLtGEMMBench::initialize()
 
 void HipBLASLtGEMMBench::destroy()
 {
-    std::cout << "Destroying hipblaslt" << std::endl;
     if(handle)
     {
         CHECK_HIPBLASLT_ERROR(hipblasLtDestroy(handle));
