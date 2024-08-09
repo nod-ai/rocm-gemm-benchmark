@@ -636,6 +636,13 @@ UNET = [
     (8192, 5120, 640),
 ]
 
+SDXL_ATTN = [
+    (2, 10, 4096, 4096, 64, "fp16"),
+    (2, 10, 4096, 64, 64, "fp16"),
+    (2, 10, 1024, 1024, 64, "fp16"),
+    (2, 20, 1024, 64, 64, "fp16"),
+]
+
 def llama13bmatvec():
     """LLAMA 13b, single batch, FP16."""
     for m, n, k, model, gcount in LLAMA:
@@ -816,32 +823,60 @@ def unet():
                 for m, n, k in UNET:
                     yield GEMM("unet", m, n, k, tA, tB, dtype)
 
-def flash_attention():
-    batch_sizes = [1, 2, 4, 8, 16]
-    head_counts = [12, 24, 36, 42, 48]
-    head_dims = [32, 64, 128]
-    seq_lengths = [64, 128, 256, 384, 512, 1024, 2048, 4096, 8192, 16384, 32768, 64320]
-    datatypes = ["f16"]
+def surya():
+    yield GEMM("surya", 50, 50, 50, "N", "T", "bf16")
 
-    # shapes = []
-    shapes = [
-        (1, 42, 384, 64320, 64, "f16"),
-        (1, 42, 4096, 4096, 64, "f16"),
-        (1, 42, 384, 4096, 64, "f16"),
-        (1, 42, 8192, 8192, 64, "f16"),
-        (1, 42, 384, 8192, 64, "f16"),
-        (1, 42, 16384, 16384, 64, "f16"),
-        (1, 42, 384, 16384, 64, "f16"),
-    ]
+def generate_attention_shapes(
+    name : str,
+    batch_sizes : list[int], 
+    head_counts : list[int], 
+    head_dims : list[int], 
+    seq_lengths : list[int], 
+    datatypes : list[int]):
+
     for B, H, S_Q, S_KV, DH, datatype in itertools.product(batch_sizes, head_counts, seq_lengths, seq_lengths, head_dims, datatypes):
         bytes = B * H * 2 * (2 * S_KV * DH + 2 * S_Q * DH + S_Q * S_KV)
         if bytes < 1e9:
-            shapes.append((B, H, S_Q, S_KV, DH, datatype))
+            yield GEMM(name, S_Q, S_KV, DH, chr(B), chr(H), datatype)
 
+def llama70battention():
+    yield from generate_attention_shapes(
+        "llama70battention",
+        batch_sizes=[1, 2, 4],
+        head_counts=[32, 40, 64],
+        head_dims=[128],
+        seq_lengths=[1024, 2048, 4096],
+        datatypes=["fp8", "fp16"],
+    )
+
+def sdxlattention():
+    for B, H, S_Q, S_KV, DH, _ in SDXL_ATTN:
+        bytes = B * H * 2 * (2 * S_KV * DH + 2 * S_Q * DH + S_Q * S_KV)
+        if bytes < 1e9:
+            for datatype in ["fp8", "fp16"]:
+                yield GEMM("sdxlattention", S_Q, S_KV, DH, chr(B), chr(H), datatype)
+
+def flash_attention():
+    batch_sizes = [1, 2, 4, 8, 16, 32]
+    head_counts = [12, 24, 36, 42, 48]
+    head_dims = [32, 64, 128]
+    seq_lengths = [64, 128, 256, 384, 512, 1024, 2048, 4096, 8192, 16384, 32768, 64320]
+    datatypes = ["fp16"]
+
+    # shapes = []
+    shapes = [
+        (1, 42, 384, 64320, 64, "fp16"),
+        (1, 42, 4096, 4096, 64, "fp16"),
+        (1, 42, 384, 4096, 64, "fp16"),
+        (1, 42, 8192, 8192, 64, "fp16"),
+        (1, 42, 384, 8192, 64, "fp16"),
+        (1, 42, 16384, 16384, 64, "fp16"),
+        (1, 42, 384, 16384, 64, "fp16"),
+    ]
     
-    for B, H, S_Q, S_KV, DH, datatype in shapes:
-        yield GEMM("flash_attention", S_Q, S_KV, DH, chr(B), chr(H), datatype)
-        
+    # yield from generate_attention_shapes("generalattention", batch_sizes, head_counts, head_dims, seq_lengths, datatypes)
+    yield from llama70battention()
+    yield from sdxlattention()
 
 
 def all():

@@ -26,6 +26,15 @@ std::optional<T> option(std::string const& prefix, int argc, char* argv[])
         }
         return false;
     }
+    else if constexpr(std::is_same_v<T, std::string>)
+    {
+        for(int i = 1; i < argc; ++i)
+        {
+            std::string arg(argv[i]);
+            if(!arg.compare(0, prefix.size(), prefix))
+                return arg.substr(prefix.size());
+        }
+    }
     else
     {
         std::cout << "Option type not implemented yet." << std::endl;
@@ -38,16 +47,18 @@ int main(int argc, char* argv[])
     // Parse arguments
     auto help    = option<bool>("--help", argc, argv).value_or(false);
     auto device  = option<int>("--device=", argc, argv).value_or(0);
+    auto backend = option<std::string>("--backend=", argc, argv).value_or("all");
     auto testDPM = option<bool>("--test-dpm", argc, argv).value_or(false);
 
     if(help)
     {
-        std::cout << "Usage: gemm-bench [--help] [--test-dpm] [--device=<int>]" << std::endl;
+        std::cout << "Usage: gemm-bench [--help] [--test-dpm] [--device=<int>] [--backend=<string>]"
+                  << std::endl;
         return 1;
     }
 
     if(testDPM)
         return GEMMBench::testDPM(device);
 
-    return GEMMBench::run(device);
+    return GEMMBench::run(device, backend);
 }
