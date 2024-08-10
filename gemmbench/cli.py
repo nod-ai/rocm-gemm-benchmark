@@ -8,6 +8,7 @@ import pathlib
 import sys
 
 import gemmbench
+from gemmbench.bench_utils import *
 import pandas
 
 import numpy as np
@@ -38,13 +39,48 @@ def run(top=None, suite=None, output=None, no_shuffle=False, repeat=10, backends
             datetime.datetime.now().strftime("%Y-%m-%d-%H%M")
             + "-"
             + gemmbench.git.short_hash()
-            + ".hdf"
+            + ".csv"
         )
     output = pathlib.Path(output)
 
     print(f"Writing results to: {output}")
 
-    with h5py.File(output, "w") as h5:
+    with open(output, mode='w', newline='') as csvfile:
+        if 'sharkfa' in backends:
+            fieldnames = [
+                "index", 
+                "tag",
+                "name",
+                "BATCH",
+                "NH",
+                "SEQ_Q",
+                "SEQ_KV",
+                "D_HEAD",
+                "dtype",
+                "mean_microseconds",
+                "arithmetic_intensity",
+                "tflops",
+                "ok",
+            ]
+        else:
+            fieldnames = [
+                "index", 
+                "tag",
+                "name",
+                "M",
+                "N",
+                "K",
+                "dtype",
+                "A",
+                "B",
+                "mean_microseconds",
+                "arithmetic_intensity",
+                "tflops",
+                "ok",
+            ]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+
         for i, (problem, solution, configuration, result) in enumerate(
             gemmbench.server.run_problems(
                 problems,
@@ -54,25 +90,30 @@ def run(top=None, suite=None, output=None, no_shuffle=False, repeat=10, backends
                 repeat=repeat,
             )
         ):
-            params = {}
-            params.update(problem)
-            params.update(solution)
-            params.update(configuration)
+            row = {"index": i}
+            row.update(problem)
+            row.update(solution)
+            row["ok"] = result["ok"]
+            row["mean_microseconds"] = result["mean_microseconds"]
 
-            experiment_group = h5.create_group(str(i))
-            for k in params.keys():
-                experiment_group.attrs[k] = params[k]
-            for k in result.keys():
-                if not isinstance(result[k], np.ndarray):
-                    experiment_group.attrs[k] = result[k]
+            if 'sharkfa' in backends:
+                row["BATCH"] = ord(str(row['A'])[0])
+                row["NH"] = ord(str(row['B'])[0])
+                row["SEQ_Q"] = row['M']
+                row["SEQ_KV"] = row['N']
+                row["D_HEAD"] = row['K']
+                flops, bytes = get_problem_compute('attention', row["BATCH"], row["NH"], row["SEQ_Q"], row["SEQ_KV"], row["D_HEAD"], row["dtype"])
+            else:
+                flops, bytes = get_problem_compute('gemm', row['M'], row['N'], row['K'], row['dtype'])
+            
+            if row['ok']:
+                row['arithmetic_intensity'] = flops / bytes
+                row['tflops'] = (flops / 1e12) / (row['mean_microseconds'] / 1e6)
+            else:
+                row['arithmetic_intensity'] = 0
+                row['tflops'] = 0
 
-            hwmon_group = experiment_group.create_group("hwmon")
-            hwmon_group.create_dataset("system", data=result["sclk"])
-            hwmon_group.create_dataset("memory", data=result["mclk"])
-            hwmon_group.create_dataset("temperature", data=result["temperature"])
-            hwmon_group.create_dataset("power", data=result["power"])
-
-            h5.flush()
+            writer.writerow({k: row[k] for k in row.keys() if k in fieldnames})
 
 def roofline(results=None, **kwargs):
     """Generate a roofline plot of GEMM performance from multiple result files and save raw data as CSV."""
@@ -84,60 +125,19 @@ def roofline(results=None, **kwargs):
     
     plt.figure(figsize=(12, 8))
 
-    
     for idx, result_file in enumerate(files):
         data = []
-        if result_file.split('.')[-1] == 'hdf':
-            with h5py.File(result_file.strip(), "r") as h5:
-                for serial in h5.keys():
-                    experiment_group = h5[serial]
-                    data.append(dict(serial=int(serial), **experiment_group.attrs))
-        elif result_file.split('.')[-1] == 'csv':
-            df = pandas.read_csv(result_file)
-            data = df.to_dict(orient='records')
-
-        # data = [item for item in data if item["ok"]]
-
-        print(data[0])
-
-        for item in data:
-            flops = 0
-            bytes = 1
-
-            if 'sharkfa' in result_file or 'torch' in result_file:
-                B, H, S_Q, S_KV, DH = item['A'], item['B'], item['M'], item['N'], item['K']
-                if result_file.split('.')[-1] == 'hdf':
-                    item['A'], item['B'] = B, H = ord(item['A'][0]), ord(item['B'][0])
-                flops = 4 * S_Q * S_KV * DH * B * H
-                bytes = B * H * 2 * (2 * S_KV * DH + 2 * S_Q * DH + S_Q * S_KV)
-            else:
-                M, N, K = item['M'], item['N'], item['K']
-                flops = 2 * M * N * K
-                bytes = M * K + N * K + M * N
-            
-            if item['ok']:
-                item['arithmetic_intensity'] = flops / bytes
-                item['tflops'] = (flops / 1e12) / (item['mean_microseconds'] / 1e6)
-            else:
-                item['arithmetic_intensity'] = 0
-                item['tflops'] = 0
+        with open(result_file.strip(), mode='r') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                row = {k: float(v) if k not in ['ok', 'tag', 'name', 'A', 'B', 'dtype'] else v for k, v in row.items()}
+                row['ok'] = True if 'ok' not in row else row['ok'] == 'True'
+                data.append(row)
         
-        # data = [item for item in data if item['dtype'] == 'fp16']
         x = [item['arithmetic_intensity'] for item in data]
         y = [item['tflops'] for item in data]
         
         plt.scatter(x, y, alpha=0.6, color=next(colors), label=result_file.strip())
-
-        # Save raw data as CSV
-        csv_filename = f"{os.path.splitext(result_file.strip())[0]}_raw_data.csv"
-        with open(csv_filename, 'w', newline='') as csvfile:
-            fieldnames = ['serial', 'A', 'B', 'M', 'N', 'K', 'dtype', 'mean_microseconds', 'arithmetic_intensity', 'tflops']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-            for item in data:
-                if item['ok']:
-                    writer.writerow({field: item[field] for field in fieldnames})
-        print(f"Raw data saved as '{csv_filename}'")
     
     plt.xscale('log')
     plt.yscale('log')
@@ -167,52 +167,6 @@ def roofline(results=None, **kwargs):
     
     print("Roofline plot saved as 'roofline_plot.png'")
 
-
-def summary(results=None, **kwargs):
-    """Print a summary of the results in an HDF file."""
-
-    sorting = [
-        "tag",
-        "dtype",
-        "M",
-        "N",
-        "K",
-        "A",
-        "B",
-        "fclk",
-        "mclk",
-        "mean_microseconds",
-    ]
-    columns = [
-        "{tag:24s}",
-        "{ok:1}",
-        "{device:1d}",
-        "{dtype:4s}",
-        "{M:7d}",
-        "{N:7d}",
-        "{K:7d}",
-        "{AB:2s}",
-        "{fclk:1d}/{mclk:1d}",
-        "{mean_microseconds:10.2f}us",
-        "{serial:6d}",
-        "{min_sclk:6.1f}/{mean_sclk:6.1f}/{max_sclk:6.1f}",
-        "{min_mclk:6.1f}/{mean_mclk:6.1f}/{max_mclk:6.1f}",
-        "{min_fclk:6.1f}/{mean_fclk:6.1f}/{max_fclk:6.1f}",
-    ]
-    columns = " ".join(columns)
-
-    summary = []
-    with h5py.File(results, "r") as h5:
-        for serial in h5.keys():
-            experiment_group = h5[serial]
-            summary.append(dict(serial=int(serial), **experiment_group.attrs))
-
-    summary.sort(key=itemgetter(*sorting))
-    for result in summary:
-        result["AB"] = result["A"] + result["B"]
-        result["ok"] = {True: " ", False: "X"}[result["ok"]]
-        print(columns.format(**result))
-
 def compare(results=None, **kwargs):
     """Compare performance based on GEMM problem size (M * N * K) across different result files."""
 
@@ -228,14 +182,15 @@ def compare(results=None, **kwargs):
     
     # Extract data from each result file
     for file in result_files:
-        with h5py.File(file, 'r') as h5:
-            backend_data = []
-            for serial in h5.keys():
-                experiment_group = h5[serial]
-                attrs = dict(serial=int(serial), **experiment_group.attrs)
-                attrs["AB"] = attrs["A"] + attrs["B"]
-                backend_data.append(attrs)
-                datatypes.add(attrs["dtype"])
+        backend_data = []
+        with open(file.strip(), mode='r') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                row = {k: float(v) if k not in ['ok', 'tag', 'name', 'A', 'B', 'dtype'] else v for k, v in row.items()}
+                row['ok'] = row['ok'] == 'True'
+                row['AB'] = row['A'] + row['B']
+                backend_data.append(row)
+                datatypes.add(row["dtype"])
             data.append(backend_data)
     
     # Sort data for consistent plotting
@@ -255,19 +210,7 @@ def compare(results=None, **kwargs):
             dtype_data = [(mnk, mean) for mnk, mean, dt, algorithm in zip(M_N_K, mean_milliseconds, dtypes, algorithms) if dt == dtype]
             if dtype_data:
                 x, y = zip(*dtype_data)
-                plt.scatter(x, y, c=color, marker=symbol_map[dtype], label=f'{file} - {dtype}', alpha=0.6, edgecolors='w', linewidth=0.5)
-        # if 'iree' in file:
-        #     for algorithm in ["NN", "NT", "TN"]:
-        #         dtype_data = [(mnk, mean) for mnk, mean, dt, algo in zip(M_N_K, mean_milliseconds, dtypes, algorithms) if algo == algorithm]
-        #         if dtype_data:
-        #             x, y = zip(*dtype_data)
-        #             plt.scatter(x, y, c=next(colors), marker=symbol_map["fp16"], label=f'{file} - {algorithm}', alpha=0.6, edgecolors='w', linewidth=0.5)
-        # else:
-        #     dtype_data = [(mnk, mean) for mnk, mean, dt, algo in zip(M_N_K, mean_milliseconds, dtypes, algorithms)]
-        #     if dtype_data:
-        #         x, y = zip(*dtype_data)
-        #         plt.scatter(x, y, c=next(colors), marker=symbol_map["bf16"], label=f'{file}', alpha=0.6, edgecolors='w', linewidth=0.5)
-
+                plt.scatter(x, y, c=color, marker=symbol_map[dtype], label=f'{file.strip()} - {dtype}', alpha=0.6, edgecolors='w', linewidth=0.5)
     
     plt.xlabel('GEMM Problem Size (M * N * K)')
     plt.ylabel('Mean Milliseconds')
@@ -277,6 +220,9 @@ def compare(results=None, **kwargs):
     plt.xscale('log')
     plt.yscale('log')
     plt.savefig('comparison.png')
+    plt.close()
+    
+    print("Comparison plot saved as 'comparison.png'")
 
 
 def ls(top=None, suite=None, format=None, output=None, **kwargs):
@@ -323,10 +269,7 @@ def main(top: pathlib.Path):
     ls_parser.add_argument("--output")
 
     specs_parser = subparsers.add_parser("specs", help=specs.__doc__)
-
-    summary_parser = subparsers.add_parser("summary", help=summary.__doc__)
-    summary_parser.add_argument("--results")
-
+    
     summary_parser = subparsers.add_parser("compare", help=compare.__doc__)
     summary_parser.add_argument("--results")
 

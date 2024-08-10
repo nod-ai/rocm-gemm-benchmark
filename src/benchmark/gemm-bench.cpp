@@ -85,20 +85,20 @@ namespace GEMMBench
     /**
      * Connect to ZMQ server and dispatch GEMM runs via `run_problem`.
      */
-    int run(int device)
+    int run(int device, std::string backend)
     {
-        std::cout << "Initializing tensors with trig..." << std::endl;
-        GEMMNullInitializer initializer;
+        GEMMTrigInitializer initializer;
         GEMMData            data("fp32", 1e9, &initializer);
-
-        std::cout << "Running on " << benches.size() << " benches" << std::endl;
 
         for(const auto& [name, pipeline] : benches)
         {
-            std::cout << "Initializing " << name << std::endl;
-            pipeline->initialize();
-            pipeline->setDevice(device);
-            pipeline->linkData(&data);
+            if(name == backend || backend == "all")
+            {
+                std::cout << "Initializing " << name << std::endl;
+                pipeline->initialize();
+                pipeline->setDevice(device);
+                pipeline->linkData(&data);
+            }
         }
 
         Frequency::getFrequencyMonitor()->setDevice(device);

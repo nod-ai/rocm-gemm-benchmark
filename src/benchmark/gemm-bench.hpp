@@ -126,6 +126,7 @@ namespace GEMMBench
     private:
         IREEGemmRuntimeState*  runtime_state;
         IREEGemmDeviceStorage* storage_fp16;
+        IREEGemmDeviceStorage* storage_fp32;
         int                    device_id = 0;
 
     public:
@@ -184,5 +185,5 @@ namespace GEMMBench
     };
 
     int testDPM(int device);
-    int run(int device);
+    int run(int device, std::string backend);
 }

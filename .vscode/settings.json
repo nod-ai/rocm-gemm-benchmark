@@ -114,11 +114,14 @@
     "syncstream": "c",
     "runtime.hpp": "c",
     "strstream": "cpp",
-    "__functional_03": "cpp"
+    "__functional_03": "cpp",
+    "hash_map": "cpp",
+    "hash_set": "cpp"
   },
   "editor.formatOnSave": true,
   "editor.rulers": [80],
   "clang-format.executable": "usr/bin/clang-format",
   "C_Cpp.errorSquiggles": "enabled",
-  "dotnet.defaultSolution": "disable"
+  "dotnet.defaultSolution": "disable",
+  "git.ignoreLimitWarning": true
 }

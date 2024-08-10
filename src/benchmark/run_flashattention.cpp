@@ -26,9 +26,10 @@ inline bool fileExists(const std::string& name)
 std::string
     generateFAString(size_t B, size_t H, size_t S_Q, size_t S_KV, size_t DH, std::string dtype)
 {
-    std::string result = "attention_B" + std::to_string(B) + "_H" + std::to_string(H) + "_SQ"
+    std::string iree_dtype = dtype == "fp16" ? "f16" : "f8";
+    std::string result     = "attention_B" + std::to_string(B) + "_H" + std::to_string(H) + "_SQ"
                          + std::to_string(S_Q) + "_SKV" + std::to_string(S_KV) + "_DH"
-                         + std::to_string(DH) + "_" + "f16";
+                         + std::to_string(DH) + "_" + iree_dtype;
 
     return result;
 }
@@ -37,26 +38,23 @@ void SHARKFABench::initialize()
 {
     device_id    = 7;
     storage_fp16 = new IREEGemmDeviceStorage("fp16");
+    storage_fp32 = new IREEGemmDeviceStorage("fp32");
 }
 
 void SHARKFABench::linkData(GEMMData* data)
 {
     storage_fp16->allocate(runtime_state->device, data->getCapacity(), data->getBufferA());
+    storage_fp32->allocate(runtime_state->device, data->getCapacity(), data->getBufferB());
 }
 
 void SHARKFABench::setDevice(int device_id)
 {
     this->device_id = device_id;
     runtime_state   = new IREEGemmRuntimeState("rocm://" + std::to_string(device_id));
-    std::cout << "Running on " << device_id << std::endl;
 }
 
 Result SHARKFABench::run(Problem problem)
 {
-    // std::cout << "Parameters before = " << problem.A << " " << problem.B << " " << problem.M << " "
-    //           << problem.K << " " << problem.N << " " << problem.dtype << std::endl;
-    IREEGemmRunner runner(runtime_state, storage_fp16, false);
-
     size_t      S_Q   = (size_t)problem.M;
     size_t      S_KV  = (size_t)problem.N;
     size_t      DH    = (size_t)problem.K;
@@ -64,8 +62,7 @@ Result SHARKFABench::run(Problem problem)
     size_t      H     = (size_t)problem.B;
     std::string dtype = problem.dtype;
 
-    // std::cout << "Parameters afters = " << B << " " << H << " " << S_KV << " " << S_Q << " " << DH
-    //           << " " << dtype << std::endl;
+    IREEGemmRunner runner(runtime_state, dtype == "fp16" ? storage_fp16 : storage_fp32, false);
 
     int num_cold_iterations = 50;
     int num_warm_iterations = 100;
