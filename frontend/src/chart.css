@@ -1,0 +1,78 @@
+.filters-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+select {
+  font-size: 1.1em;
+  font-family: inherit;
+  font-weight: bold;
+}
+
+select > option {
+  font-size: 0.5em;
+  font-family: inherit;
+  font-weight: normal;
+}
+
+.filter-label {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+  font-size: 0.9em;
+  color: #555;
+}
+
+.filter-label input[type="checkbox"] {
+  margin-right: 8px;
+  cursor: pointer;
+  transform: scale(1.2);
+}
+
+.filter-label:hover {
+  color: #000;
+}
+
+.filter-row {
+  width: 100%;
+  padding: 10px 20px;
+}
+
+.filter-row h4 {
+  text-align: left;
+  margin: 0px;
+  margin-bottom: 5px;
+  font-size: 1.1em;
+  color: #333;
+}
+
+.checkbox-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.checkbox-label {
+  margin-right: 10px;
+}
+
+.toggle-filters {
+  display: block;
+  margin: 0 auto 20px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.toggle-filters:hover {
+  background-color: #0056b3;
+}
