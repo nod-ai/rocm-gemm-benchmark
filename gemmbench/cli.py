@@ -130,7 +130,7 @@ def roofline(results=None, **kwargs):
         with open(result_file.strip(), mode='r') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
-                row = {k: float(v) if k not in ['ok', 'tag', 'name', 'A', 'B', 'dtype'] else v for k, v in row.items()}
+                row = {k: float(v) if k not in ['ok', 'tag', 'name', 'A', 'B', 'dtype', "image", "conv_filter", "output", "input_dtype", "output_dtype"] else v for k, v in row.items()}
                 row['ok'] = True if 'ok' not in row else row['ok'] == 'True'
                 data.append(row)
         
@@ -147,8 +147,8 @@ def roofline(results=None, **kwargs):
     
     peak_memory_bandwidth = 5.3
     peak_compute = 1300
-    
-    x_range = np.logspace(np.log10(min(x)), np.log10(max(x)), 100)
+
+    x_range = np.logspace(np.log10(min(x)), np.log10(max(max(x), 150)), 100)
     y_memory = peak_memory_bandwidth * x_range
     y_compute = np.full_like(x_range, peak_compute)
     
