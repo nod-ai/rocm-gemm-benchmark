@@ -1,37 +1,11 @@
 import os
-import iree.compiler as ireec
 from tqdm import tqdm
 from multiprocessing import Pool, cpu_count, Manager
 import logging
-import subprocess
 from pathlib import Path
 import csv
-from typing import Sequence
-from collections import namedtuple
 import argparse
-
-def run_iree_command(args: Sequence[str] = ()):
-    command = "Exec:", " ".join(args)
-    logging.getLogger().info(command)
-    proc = subprocess.run(
-        args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False
-    )
-    (
-        stdout_v,
-        stderr_v,
-    ) = (
-        proc.stdout,
-        proc.stderr,
-    )
-    return_code = proc.returncode
-    if return_code == 0:
-        return 0, proc.stdout
-    logging.getLogger().error(
-        f"Command failed!\n"
-        f"Stderr diagnostics:\n{proc.stderr}\n"
-        f"Stdout diagnostics:\n{proc.stdout}\n"
-    )
-    return 1, proc.stderr
+from conv_utils import *
 
 def generate_mlir_content(image, conv_filter, stride, output, inputs_dtype, output_dtype):
     image_shape = ""
@@ -88,81 +62,6 @@ def compile_shape(image, conv_filter, stride, output, inputs_dtype, output_dtype
     if ret_value == 0:
         return f"Successfully compiled {mlir_filename} to {vmfb_filename}"
 
-BenchmarkResult = namedtuple(
-    "BenchmarkResult", "benchmark_name time cpu_time iterations user_counters"
-)
-
-def decode_output(bench_lines):
-    benchmark_results = []
-    for line in bench_lines:
-        split = line.split()
-        if len(split) == 0:
-            continue
-        benchmark_name = split[0]
-        time = " ".join(split[1:3])
-        cpu_time = " ".join(split[3:5])
-        iterations = split[5]
-        user_counters = None
-        if len(split) > 5:
-            user_counters = split[6]
-        benchmark_results.append(
-            BenchmarkResult(
-                benchmark_name=benchmark_name,
-                time=time,
-                cpu_time=cpu_time,
-                iterations=iterations,
-                user_counters=user_counters,
-            )
-        )
-    return benchmark_results
-
-def bench_summary_process(ret_value, output):
-    if ret_value == 1:
-        # Output should have already been logged earlier.
-        logging.getLogger().error("Running convolution benchmark failed. Exiting.")
-        return
-
-    bench_lines = output.decode().split("\n")[3:]
-    benchmark_results = decode_output(bench_lines)
-    logging.getLogger().info(benchmark_results)
-    benchmark_mean_time = float(benchmark_results[10].time.split()[0])
-    
-    return benchmark_mean_time
-
-def write_results_to_csv(results : list[tuple] | list[list] | list[dict], output_filename: str):
-    if len(results) == 0:
-        print('No valid results')
-        return
-    
-    fieldnames = [
-        'index', 
-        'tag',
-        'name',
-        'image', 
-        'conv_filter', 
-        'output', 
-        'input_dtype', 
-        'output_dtype',
-        'mean_microseconds',
-        'arithmetic_intensity',
-        'tflops',
-        'ok'
-    ]
-
-    with open(output_filename, 'w', newline='') as f:
-        if isinstance(results[0], list) or isinstance(results[0], tuple):
-            writer = csv.writer(f)
-            writer.writerow(fieldnames)
-        elif isinstance(results[0], dict):
-            writer = csv.DictWriter(f, fieldnames)
-            writer.writeheader()
-        else:
-            print('Invalid result format')
-            return
-        
-        for result in results:
-            writer.writerow(result)
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Config file updater.")
     parser.add_argument(
@@ -172,9 +71,14 @@ if __name__ == "__main__":
         type=str.upper,
         help="Set the logging level",
     )
+    parser.add_argument("--roofline", help="Comma seperated csv file list to generate roofline plot with", default=None)
     
     args = parser.parse_args()
     logging.basicConfig(level=args.log_level)
+
+    if args.roofline:
+        roofline(args.roofline)
+        sys.exit()
     
     shapes = []
     print(f"Generated {len(shapes)} conv shapes.")
