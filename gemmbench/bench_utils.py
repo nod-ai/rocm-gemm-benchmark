@@ -26,7 +26,7 @@ def get_problem_compute(algorithm : str, *args: float) -> tuple[float, float]:
         M, N, K, dtype = args
         bpe = device_sizeof(dtype)
         flops = 2 * M * N * K
-        bytes = bpe * M * K + N * K + M * N
+        bytes = bpe * (M * K + N * K + M * N)
     elif algorithm == 'attention':
         B, H, S_Q, S_KV, DH, dtype = args
         bpe = device_sizeof(dtype)
