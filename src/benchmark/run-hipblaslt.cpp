@@ -224,11 +224,11 @@ void HipBLASLtGEMMBench::executeGemm(int                 num_iterations,
     int64_t shapeA[2] = {trans_a == HIPBLAS_OP_N ? m : k, trans_a == HIPBLAS_OP_N ? k : m};
     int64_t shapeB[2] = {trans_b == HIPBLAS_OP_N ? k : n, trans_a == HIPBLAS_OP_N ? n : k};
     CHECK_HIPBLASLT_ERROR(
-        hipblasLtMatrixLayoutCreate(&matA, HIP_R_16F, shapeA[0], shapeA[1], shapeA[0]));
+        hipblasLtMatrixLayoutCreate(&matA, HIP_R_8I, shapeA[0], shapeA[1], shapeA[0]));
     CHECK_HIPBLASLT_ERROR(
-        hipblasLtMatrixLayoutCreate(&matB, HIP_R_16F, shapeB[0], shapeB[1], shapeB[0]));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matC, HIP_R_16F, m, n, m));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, HIP_R_16F, m, n, m));
+        hipblasLtMatrixLayoutCreate(&matB, HIP_R_8I, shapeB[0], shapeB[1], shapeB[0]));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matC, HIP_R_8I, m, n, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, HIP_R_8I, m, n, m));
 
     if(batch_count > 1)
     {
