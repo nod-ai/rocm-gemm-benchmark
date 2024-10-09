@@ -901,12 +901,6 @@ def surya():
     yield GEMM("benoit_test", 1024, 1024, 1024, "N", "T", "fp16")
     yield GEMM("benoit_test", 2048, 2048, 2048, "N", "T", "fp16")
     yield GEMM("benoit_test", 4096, 4096, 4096, "N", "T", "fp16")
-    yield GEMM("benoit_test", 128, 128, 128, "N", "T", "i8")
-    yield GEMM("benoit_test", 256, 256, 256, "N", "T", "i8")
-    yield GEMM("benoit_test", 512, 512, 512, "N", "T", "i8")
-    yield GEMM("benoit_test", 1024, 1024, 1024, "N", "T", "i8")
-    yield GEMM("benoit_test", 2048, 2048, 2048, "N", "T", "i8")
-    yield GEMM("benoit_test", 4096, 4096, 4096, "N", "T", "i8")
     
 
 configurations = [Configuration(0, 0, 0)]
