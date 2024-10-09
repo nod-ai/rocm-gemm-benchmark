@@ -878,23 +878,7 @@ def is_compute_bound(M, N, K, bpe):
 #     yield from llama70battention()
 #     yield from sdxlattention()
 
-
-# def all():
-#     yield from llama13bmatvec()
-#     yield from llama13bmatvecbf16()
-#     yield from llama70bmatvec()
-#     yield from llama70bmatvecbf16()
-#     yield from llama13bskinny()
-#     yield from llama13bskinnybf16()
-#     yield from llama70bskinny()
-#     yield from llama70bskinnybf16()
-#     yield from gpt4memory()
-#     yield from gpt4compute()
-#     yield from llama70bmemory()
-#     yield from compute()
-#     yield from unet()
-
-def surya():
+def benoit():
     yield GEMM("benoit_test", 128, 128, 128, "N", "T", "fp16")
     yield GEMM("benoit_test", 256, 256, 256, "N", "T", "fp16")
     yield GEMM("benoit_test", 512, 512, 512, "N", "T", "fp16")
@@ -902,6 +886,22 @@ def surya():
     yield GEMM("benoit_test", 2048, 2048, 2048, "N", "T", "fp16")
     yield GEMM("benoit_test", 4096, 4096, 4096, "N", "T", "fp16")
     yield GEMM("benoit_test", 8192, 8192, 8192, "N", "T", "fp16")
+
+def all():
+    yield from benoit()
+    # yield from llama13bmatvec()
+    # yield from llama13bmatvecbf16()
+    # yield from llama70bmatvec()
+    # yield from llama70bmatvecbf16()
+    # yield from llama13bskinny()
+    # yield from llama13bskinnybf16()
+    # yield from llama70bskinny()
+    # yield from llama70bskinnybf16()
+    # yield from gpt4memory()
+    # yield from gpt4compute()
+    # yield from llama70bmemory()
+    # yield from compute()
+    # yield from unet()
     
 
 configurations = [Configuration(0, 0, 0)]
