@@ -6,17 +6,7 @@ class DeviceDtype(Enum):
     BF16 = 3
 
 def device_sizeof(dtype : DeviceDtype | str) -> int:
-    if isinstance(dtype, DeviceDtype):
-        if dtype == DeviceDtype.FP8:
-            return 1
-        if dtype == DeviceDtype.FP16 or dtype == DeviceDtype.BF16:
-            return 2
-    elif isinstance(dtype, str):
-        if dtype == 'fp8':
-            return 1
-        if dtype == 'fp16' or dtype == 'bf16':
-            return 2
-    return 0
+    return 1
 
 def get_problem_compute(algorithm : str, *args: float) -> tuple[float, float]:
     flops = 0
