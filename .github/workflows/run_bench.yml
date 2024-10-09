@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: mi300
+    runs-on: mi300-f280
 
     steps:
       - name: Checkout repository
