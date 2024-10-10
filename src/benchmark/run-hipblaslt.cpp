@@ -87,31 +87,31 @@ Result HipBLASLtGEMMBench::run(Problem problem)
 
     CHECK_HIP_ERROR(hipStreamCreate(&stream));
     CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
-    CHECK_HIP_ERROR(hipMalloc(&d_a, m * k * batch_count * sizeof(hipblasLtHalf)));
-    CHECK_HIP_ERROR(hipMalloc(&d_b, n * k * batch_count * sizeof(hipblasLtHalf)));
-    CHECK_HIP_ERROR(hipMalloc(&d_c, m * n * batch_count * sizeof(hipblasLtHalf)));
-    CHECK_HIP_ERROR(hipMalloc(&d_d, m * n * batch_count * sizeof(hipblasLtHalf)));
+    CHECK_HIP_ERROR(hipMalloc(&d_a, m * k * batch_count * sizeof(hipblasLtInt8)));
+    CHECK_HIP_ERROR(hipMalloc(&d_b, n * k * batch_count * sizeof(hipblasLtInt8)));
+    CHECK_HIP_ERROR(hipMalloc(&d_c, m * n * batch_count * sizeof(hipblasLtInt8)));
+    CHECK_HIP_ERROR(hipMalloc(&d_d, m * n * batch_count * sizeof(hipblasLtInt8)));
     CHECK_HIP_ERROR(hipMalloc(&d_alphaVec, m * batch_count * sizeof(float)));
 
-    CHECK_HIP_ERROR(hipHostMalloc(&a, m * k * batch_count * sizeof(hipblasLtHalf)));
-    CHECK_HIP_ERROR(hipHostMalloc(&b, n * k * batch_count * sizeof(hipblasLtHalf)));
-    CHECK_HIP_ERROR(hipHostMalloc(&c, m * n * batch_count * sizeof(hipblasLtHalf)));
-    CHECK_HIP_ERROR(hipHostMalloc(&d, m * n * batch_count * sizeof(hipblasLtHalf)));
+    CHECK_HIP_ERROR(hipHostMalloc(&a, m * k * batch_count * sizeof(hipblasLtInt8)));
+    CHECK_HIP_ERROR(hipHostMalloc(&b, n * k * batch_count * sizeof(hipblasLtInt8)));
+    CHECK_HIP_ERROR(hipHostMalloc(&c, m * n * batch_count * sizeof(hipblasLtInt8)));
+    CHECK_HIP_ERROR(hipHostMalloc(&d, m * n * batch_count * sizeof(hipblasLtInt8)));
     CHECK_HIP_ERROR(hipHostMalloc(&alphaVec, m * batch_count * sizeof(float)));
     CHECK_HIP_ERROR(hipMalloc(&d_workspace, max_workspace_size));
 
-    memset(a, 0, m * k * batch_count * sizeof(hipblasLtHalf));
-    memset(b, 0, n * k * batch_count * sizeof(hipblasLtHalf));
-    memset(c, 0, m * n * batch_count * sizeof(hipblasLtHalf));
+    memset(a, 0, m * k * batch_count * sizeof(hipblasLtInt8));
+    memset(b, 0, n * k * batch_count * sizeof(hipblasLtInt8));
+    memset(c, 0, m * n * batch_count * sizeof(hipblasLtInt8));
     for(int i = 0; i < m * batch_count; ++i)
         ((float*)alphaVec)[i] = static_cast<float>((rand() % 7) - 3);
 
     CHECK_HIP_ERROR(hipMemcpyAsync(
-        d_a, a, m * k * batch_count * sizeof(hipblasLtHalf), hipMemcpyHostToDevice, stream));
+        d_a, a, m * k * batch_count * sizeof(hipblasLtInt8), hipMemcpyHostToDevice, stream));
     CHECK_HIP_ERROR(hipMemcpyAsync(
-        d_b, b, n * k * batch_count * sizeof(hipblasLtHalf), hipMemcpyHostToDevice, stream));
+        d_b, b, n * k * batch_count * sizeof(hipblasLtInt8), hipMemcpyHostToDevice, stream));
     CHECK_HIP_ERROR(hipMemcpyAsync(
-        d_c, c, m * n * batch_count * sizeof(hipblasLtHalf), hipMemcpyHostToDevice, stream));
+        d_c, c, m * n * batch_count * sizeof(hipblasLtInt8), hipMemcpyHostToDevice, stream));
     CHECK_HIP_ERROR(hipMemcpyAsync(
         d_alphaVec, alphaVec, m * batch_count * sizeof(float), hipMemcpyHostToDevice, stream));
 
