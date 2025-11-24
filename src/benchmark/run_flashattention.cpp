@@ -34,26 +34,26 @@ std::string
     return result;
 }
 
-void SHARKFABench::initialize()
+void AMDSHARKFABench::initialize()
 {
     device_id    = 7;
     storage_fp16 = new IREEGemmDeviceStorage("fp16");
     storage_fp32 = new IREEGemmDeviceStorage("fp32");
 }
 
-void SHARKFABench::linkData(GEMMData* data)
+void AMDSHARKFABench::linkData(GEMMData* data)
 {
     storage_fp16->allocate(runtime_state->device, data->getCapacity(), data->getBufferA());
     storage_fp32->allocate(runtime_state->device, data->getCapacity(), data->getBufferB());
 }
 
-void SHARKFABench::setDevice(int device_id)
+void AMDSHARKFABench::setDevice(int device_id)
 {
     this->device_id = device_id;
     runtime_state   = new IREEGemmRuntimeState("rocm://" + std::to_string(device_id));
 }
 
-Result SHARKFABench::run(Problem problem)
+Result AMDSHARKFABench::run(Problem problem)
 {
     size_t      S_Q   = (size_t)problem.M;
     size_t      S_KV  = (size_t)problem.N;
@@ -116,7 +116,7 @@ Result SHARKFABench::run(Problem problem)
                   fm->power()};
 }
 
-void SHARKFABench::destroy()
+void AMDSHARKFABench::destroy()
 {
     std::cout << "Destroying bench" << std::endl;
     delete runtime_state;

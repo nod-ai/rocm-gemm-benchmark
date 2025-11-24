@@ -1300,7 +1300,7 @@ arg_to_torch_dtype = {
 }
 
 def main():
-    input_csv = "results/shark_llama_sdxl_attention.csv"
+    input_csv = "results/amd-shark_llama_sdxl_attention.csv"
     output_csv = "results/triton_llama_sdxl_attention.csv"
     
     shapes = read_shapes_from_csv(input_csv)

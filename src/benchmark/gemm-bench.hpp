@@ -121,7 +121,7 @@ namespace GEMMBench
         Result run(Problem problem) override;
     };
 
-    class SHARKFABench : public GEMMPipeline
+    class AMDSHARKFABench : public GEMMPipeline
     {
     private:
         IREEGemmRuntimeState*  runtime_state;
@@ -130,7 +130,7 @@ namespace GEMMBench
         int                    device_id = 0;
 
     public:
-        SHARKFABench() {};
+        AMDSHARKFABench() {};
         void   initialize() override;
         void   linkData(GEMMData* data) override;
         void   setDevice(int device_id) override;
