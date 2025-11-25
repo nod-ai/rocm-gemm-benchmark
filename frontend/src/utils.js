@@ -4,7 +4,7 @@ const backendColors = {
   iree: "rgba(255, 99, 132, 0.8)",
   rocblas: "rgba(54, 162, 235, 0.8)",
   hipblaslt: "rgba(75, 192, 192, 0.8)",
-  shark: "rgba(255, 99, 132, 0.8)",
+  amdshark: "rgba(255, 99, 132, 0.8)",
   triton: "rgba(54, 162, 235, 0.8)",
   torch: "rgba(75, 192, 192, 0.8)",
 };

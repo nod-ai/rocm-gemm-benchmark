@@ -24,7 +24,7 @@ ChartJS.register(
 
 const algBackends = {
   gemm: ["iree", "rocblas", "hipblaslt"],
-  attention: ["shark", "torch", "triton"],
+  attention: ["amdshark", "torch", "triton"],
 };
 
 const algPlots = {

@@ -168,12 +168,12 @@ Benchmarks can be run in parallel across multiple GPUs. If the `--backends` argu
    deactivate
    ```
 
-4. **SHARK Attention Benchmarks**:
+4. **AMD-SHARK Attention Benchmarks**:
    ```bash
    sudo pkill -f gemm-bench
    source venv/bin/activate
    for device in $(seq 0 2); do (sudo build/gemm-bench --device=$device &); done
-   ./gb run --backends=sharkfa --suite=flash_attention --repeat=1 --output=results/sharkfa_llama_sdxl_attention.csv
+   ./gb run --backends=amdsharkfa --suite=flash_attention --repeat=1 --output=results/amd-sharkfa_llama_sdxl_attention.csv
    sudo pkill -f gemm-bench
    deactivate
    ```

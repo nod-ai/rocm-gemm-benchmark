@@ -51,7 +51,7 @@ def run_benchmark(shape: tuple[int, int, int, int, int, str]) -> tuple[float, fl
     return mean_microseconds, arithmetic_intensity, tflops_per_second
 
 def main():
-    input_csv = "results/shark_llama_sdxl_attention.csv"
+    input_csv = "results/amd-shark_llama_sdxl_attention.csv"
     output_csv = "results/torch_llama_sdxl_attention.csv"
     
     configs = read_shapes_from_csv(input_csv)

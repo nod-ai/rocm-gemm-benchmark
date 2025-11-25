@@ -46,7 +46,7 @@ def run(top=None, suite=None, output=None, no_shuffle=False, repeat=10, backends
     print(f"Writing results to: {output}")
 
     with open(output, mode='w', newline='') as csvfile:
-        if 'sharkfa' in backends:
+        if 'amdsharkfa' in backends:
             fieldnames = [
                 "index", 
                 "tag",
@@ -96,7 +96,7 @@ def run(top=None, suite=None, output=None, no_shuffle=False, repeat=10, backends
             row["ok"] = result["ok"]
             row["mean_microseconds"] = result["mean_microseconds"]
 
-            if 'sharkfa' in backends:
+            if 'amdsharkfa' in backends:
                 row["BATCH"] = ord(str(row['A'])[0])
                 row["NH"] = ord(str(row['B'])[0])
                 row["SEQ_Q"] = row['M']

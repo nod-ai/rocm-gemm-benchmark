@@ -18,7 +18,7 @@ namespace GEMMBench
         {"rocblas", new RocBLASGEMMBench()},
         {"hipblaslt", new HipBLASLtGEMMBench()},
         {"iree", new IREEGEMMBench()},
-        {"sharkfa", new SHARKFABench()},
+        {"amdsharkfa", new AMDSHARKFABench()},
     };
 
     /**
